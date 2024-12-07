@@ -1,15 +1,15 @@
                                                                 
 version 2
-run Base-0-20241023-19:35:37-6515
+run Base-0-20241207-13:57:04-28042
 attr configname Base
-attr datetime 20241023-19:35:37
+attr datetime 20241207-13:57:04
 attr experiment Base
 attr inifile omnetpp.ini
 attr iterationvars ""
 attr iterationvarsf ""
 attr measurement ""
 attr network artery.envmod.World
-attr processid 6515
+attr processid 28042
 attr repetition 0
 attr replication #0
 attr resultdir results
@@ -6333,4 +6333,4 @@ attr source sentPacketToUpperLayer
 vector 1924 World.node[219].lteNic.pdcpRrc sentPacketToUpperLayer:vector(packetBytes) ETV
 attr interpolationmode none
 attr source sentPacketToUpperLayer
-vector 1925 World.node[444].lte
+vector 1925 World.node[444].l
