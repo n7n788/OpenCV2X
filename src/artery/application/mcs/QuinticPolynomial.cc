@@ -1,6 +1,9 @@
 #include <iostream>
 #include "QuinticPolynomial.h"
 
+namespace artery
+{
+
 // Constructor
 QuinticPolynomial::QuinticPolynomial(double xs, double vxs, double axs, double xe, double vxe, double axe, double time) {
     a0 = xs;
@@ -46,8 +49,11 @@ double QuinticPolynomial::calc_third_derivative(double t) const {
     return 6 * a3 + 24 * a4 * t + 60 * a5 * std::pow(t, 2);
 }
 
+}
 
 // Unit test or demonstration code (only compiled when this file is directly executed)
+// 実行方法
+// mcsディレクトリ下で $g++ -DQUINTIC_TEST QuinticPolynomial.cc
 #ifdef QUINTIC_TEST
 int main() {
     // Example usage for testing
