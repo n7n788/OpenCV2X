@@ -4,9 +4,13 @@
 #include <Eigen/Dense>
 #include <cmath>
 
+namespace artery {
+
 class QuarticPolynomial {
+
 public:
-    /*
+
+	/*
      * コンストラクタ
      *
      * @param xs  [double] 始点位置
@@ -47,7 +51,10 @@ public:
     double calc_third_derivative(double t) const;
 
 private:
-    double a0, a1, a2, a3, a4; // 多項式の係数
+    
+	double a0, a1, a2, a3, a4; // 多項式の係数
 };
+
+} // namespace artery
 
 #endif // QUARTIC_POLYNOMIAL_H

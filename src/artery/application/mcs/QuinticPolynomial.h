@@ -4,9 +4,13 @@
 #include <Eigen/Dense>
 #include <cmath>
 
+namespace artery {
+
 class QuinticPolynomial {
+
 public:
-    /*
+    
+	/*
      *  始点と終点から5次元多項式の係数を計算するクラス
      *
      * @param xs  [double] 始点位置
@@ -52,6 +56,8 @@ private:
     // 5次元多項式の係数
     double a0, a1, a2, a3, a4, a5;
 };
+
+} // namespace artery
 
 #endif // QUINTIC_POLYNOMIAL_H
 
