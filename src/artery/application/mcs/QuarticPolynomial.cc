@@ -24,6 +24,9 @@ QuarticPolynomial::QuarticPolynomial(double xs, double vxs, double axs, double v
 
     a3 = x[0];
     a4 = x[1];
+
+    this->convergenceTime = time;
+    this->targetSpeed = vxe;
 }
 
 // 任意の時刻tにおける位置を計算
@@ -53,14 +56,15 @@ double QuarticPolynomial::calc_third_derivative(double t) const {
 #ifdef QUARTIC_TEST
 int main() {
 	// テスト例
-	QuarticPolynomial qp(0.0, 0.0, 0.0, 2.0, 0.0, 2.0);
+	artery::QuarticPolynomial qp(0.0, 0.0, 0.0, 2.0, 0.0, 2.0);
 
 	double t = 1.0;
     std::cout << "Position at t = " << t << ": " << qp.calc_point(t) << std::endl;
     std::cout << "Velocity at t = " << t << ": " << qp.calc_first_derivative(t) << std::endl;
     std::cout << "Acceleration at t = " << t << ": " << qp.calc_second_derivative(t) << std::endl;
     std::cout << "Jerk at t = " << t << ": " << qp.calc_third_derivative(t) << std::endl;
-
+    std::cout << "Time: " << qp.getConvergenceTime() << std::endl;
+    std::cout << "Speed: " << qp.getTargetSpeed() << std::endl;
 	return 0;
 }
 #endif
