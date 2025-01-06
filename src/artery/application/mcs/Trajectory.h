@@ -14,6 +14,9 @@ class Trajectory
 {
 public:
 
+	// デフォルトコンストラクタ
+	Trajectory() {}
+
 	// コンストラクタ
 	// 5次元方程式から軌跡情報を生成
 	// @param qp [QuinticPolynomial] 5次元方程式
@@ -31,13 +34,16 @@ public:
 	const std::vector<double>& getSpeeds() { return mSpeeds; };
 	const std::vector<double>& getAccels() { return mAccels; };
 	const std::vector<double>& getJerks() { return mJerks; };
-
+	const double getConvergenceTime() { return mConvergenceTime; };
+	const double getTargetSpeed() { return mTargetSpeed; };
 private:
   
 	std::vector<double> mPoses; // 位置配列
 	std::vector<double> mSpeeds; // 速度配列
 	std::vector<double> mAccels; // 加速度配列
 	std::vector<double> mJerks; // ジャーク配列
+	double mConvergenceTime; // 収束時間
+	double mTargetSpeed; // 目標速度
 };
 
 }
