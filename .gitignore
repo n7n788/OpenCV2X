@@ -4,6 +4,8 @@ scenarios/*/results/Base/*.csv
 scenarios/*/results/Base/*.txt
 scenarios/*/results/Base/*.sca
 scenarios/*/results/Base/*.vec
+scenarios/*/results/Base/*.vci
+scenarios/*/results/Base/*.log
 scenarios/*/.tkenvrc
 scenarios/personal-*/
 
