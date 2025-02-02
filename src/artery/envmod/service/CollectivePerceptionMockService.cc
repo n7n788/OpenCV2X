@@ -252,7 +252,7 @@ void CollectivePerceptionMockService::trigger()
     
     // 2023-12-18 パラメータ
     double max_v = 16.67, max_a = 3.81, min_a = 8.35, w = 0.437, length = 5.0, width = 1.8;
-    int max_t = 20; // 100ms単位
+    int max_t = 40; // 100ms単位
     double posX = round(mVehicleDataProvider->position().x, vanetza::units::si::meter);
     double posY = round(mVehicleDataProvider->position().y, vanetza::units::si::meter);
     auto sensingIds = mEnvironmentModel->getSensingIds();
@@ -427,344 +427,13 @@ void CollectivePerceptionMockService::trigger()
                     emit(trueRiskRowSignal, calculateRow(true));
                     int h = std::hash<std::string>()(targetId);
                     emit(hashIdSignal, h);
-                    // if (mTraciId == "5.5") {
-                    //     std::cout << targetId << ": " << h << "\n";
-                    //     // double r = calculateRow(false);
-                    //     // std::cout << targetId << ": row = " << r << ", aoi = " << aoi << " s\n";
-                    // }
-                    // std:: cout << mTraciId << " bet " << targetId << ": " << calculateRow() << "s \n";
-                    // if (mTraciId == "0.2" && targetId == "0.0") std::cout << mTraciId << ": have " << targetId << ", aoi = " << aoi << " s\n";
-                    // std::cout << tracking.getSize100() << "\n";
-
-                    // int riskClass = 0;
-                    // double collisionT = 0.0;
-                    // // if (mTraciId == "0.0") std::cout << mTraciId << ": " << mVehicleDataProvider->speed().value() << " m/s, " << targetId << ": " << obj->getVehicleData().speed().value() << " m/s\n";
-                    // auto getDist = [&](double t) -> double {
-                    //     double targetX  = obj->getVehicleData().position().x.value() + obj->getVehicleData().speed().value() * sin(obj->getVehicleData().heading().value()) * (omnetpp::simTime().dbl() + t - obj->getVehicleData().updated().dbl());
-                    //     double targetY =  obj->getVehicleData().position().y.value() - obj->getVehicleData().speed().value() * cos(obj->getVehicleData().heading().value()) * (omnetpp::simTime().dbl() + t - obj->getVehicleData().updated().dbl());
-                    //     double x = mVehicleDataProvider->position().x.value() + mVehicleDataProvider->speed().value() * sin(mVehicleDataProvider->heading().value()) * (omnetpp::simTime().dbl() + t - mVehicleDataProvider->updated().dbl());
-                    //     double y = mVehicleDataProvider->position().y.value() - mVehicleDataProvider->speed().value() * cos(mVehicleDataProvider->heading().value()) * (omnetpp::simTime().dbl() + t - mVehicleDataProvider->updated().dbl());
-                    //     double dist = std::sqrt(std::pow(targetX - x, 2) + std::pow(targetY - y, 2));
-                    //     // if (mTraciId == "0.0") std::cout << "   t=" << t << ", (x, y)=" << x << ", " << y << " (tX, tY)=" << targetX << ", " << targetY << " dist=" << dist << "\n";
-                    //     // else if (mTraciId == "17.0") std::cout << targetId << "\n";
-                    //     return dist; 
-                    // };
-                    // while (collisionT < max_collisionT && getDist(collisionT) > getThresholdD(collisionT, obj->getVehicleData().speed().value())) {
-                    //     collisionT += 0.1;
-                    // }
-                    // while (collisionT < max_collisionT && getDist(collisionT) > thresholdD) {
-                    //     collisionT += 0.1;
-                    // }
-                    
-                    // if (collisionT < offset + obj->getVehicleData().speed().value() / min_a) riskClass = 0;
-                    // else riskClass = 1;
-                    // emit(riskClassSignal, riskClass);
-
-                    // if (mTraciId == "243.0") std::cout << omnetpp::simTime() << " s: collisionTime of " << mTraciId << " between " << targetId << " = " << collisionT << " s, dist = " << getDist(collisionT) << "m, threD" << getThresholdD(collisionT, obj->getVehicleData().speed().value())<< "m\n";
-    
-                    // emit(collisionTimeSignal, collisionT);
                     emit(perceptedVelocitySignal, obj->getVehicleData().speed().value());
                     emit(perceptedAccelerationSignal, obj->getVehicleData().acceleration().value());
                     emit(perceptedYawrateSignal, obj->getVehicleData().yaw_rate().value());
-                    // if (mTraciId == "189.0") std::cout << targetId << ": " << obj->getVehicleData().speed().value() << "m/s, " << obj->getVehicleData().acceleration().value() << "m/s^2, " << obj->getVehicleData().yaw_rate().value() <<  " radian/s\n";   
-                    // if (mTraciId == "95.0") {
-                    //     std::cout << tracking.traci() << ": " << delta_vx << ", " << delta_vy << " = " << reletiveVelocity << "m/s \n";
-                    // }
-                    // std::cout << tracking.traci() << ": " << tracking.getPosX() << ", " << tracking.getPosY() << ", " << tracking.getSpeed() << ", " << tracking.getHeading() << "\n";
-                    // double posErr = std::sqrt(std::pow(tracking.getPosX() -  obj->getVehicleData().position().x.value(), 2) + std::pow(tracking.getPosY() -  obj->getVehicleData().position().y.value(), 2));
-                    // double speedErr = abs(tracking.getSpeed() - obj->getVehicleData().speed().value());
-                    // double headingErr = abs(tracking.getHeading() - obj->getVehicleData().heading().value());
-                    // double estimatedPosX = tracking.getPosX() + tracking.getSpeed() * sin(tracking.getHeading()) * (obj->getVehicleData().updated().dbl() - tracking.getLastTime().dbl());
-                    // double estimatedPosY = tracking.getPosY() - tracking.getSpeed() * cos(tracking.getHeading()) * (obj->getVehicleData().updated().dbl() - tracking.getLastTime().dbl()) ;
-                    // double estimatedPosErr = std::sqrt(std::pow(estimatedPosX -  obj->getVehicleData().position().x.value(), 2) + std::pow(estimatedPosY -  obj->getVehicleData().position().y.value(), 2));
-                    
-                    // emit(posErrorSignal, posErr);
-                    // emit(speedErrorSignal, speedErr);
-                    // emit(headingErrorSignal, headingErr);
-                    // emit(estimatedPosErrorSignal, estimatedPosErr);
-
-                    // double risk = tracking.getRisk();
-                    // emit(receivedRiskSignal, risk);
-                    // if (mTraciId == "95.0" && tracking.traci() == "89.0") {
-                    //     std::cout << tracking.traci() << ": updated: " << obj->getVehicleData().updated().dbl() << "s, last time: " << tracking.getLastTime().dbl() << "\n";
-                    //     std::cout << "True: " << obj->getVehicleData().position().x.value() << "m, " << obj->getVehicleData().position().y.value() << "m, " << obj->getVehicleData().speed().value() << "m/s, " << obj->getVehicleData().heading().value() << "radian\n";
-                    //     std::cout << "have: " << tracking.getPosX() << "m, " << tracking.getPosY() << "m, " << tracking.getSpeed() << "m/s, " << tracking.getHeading() << "radian\n";
-                    //     std::cout << "estimate: " << estimatedPosX << "m, " << estimatedPosY << "m, " << estimatedPosErr << "m\n"; 
-                    //     // std::cout << tracking.traci() << ": " << posErr << ", " << speedErr << ", " << headingErr << ", " << estimatedPosX << ", " << estimatedPosY << ", " << estimatedPosErr << "\n";
-                    //     // std::cout << "pos : " << tracking.getPosX() << ", " << tracking.getPosY() << "\n";
-                    //     // std::cout << "time delta: " << obj->getVehicleData().updated().dbl() << ", " << tracking.getLastTime().dbl() << "\n";
-                    //     // std::cout << "ture pos: " << obj->getVehicleData().position().x.value() << ", " << obj->getVehicleData().position().y.value() << "\n";
-                    // }
-
-
                 }
             }
         }
     }
-    
-    // 各対象車両の危険度クラスを計算
-    // using TrackedObject = LocalEnvironmentModel::TrackedObject;
-    // auto sensingIds = mEnvironmentModel->getSensingIds();
-    // for (const TrackedObject& object : mEnvironmentModel->allObjects()) {
-    //     const LocalEnvironmentModel::Tracking& tracking = object.second;
-    //     std::shared_ptr<EnvironmentModelObject> obj = object.first.lock();
-    //     if (obj) {
-    //         std::string targetId = obj->getExternalId();
-    //         auto identity = mIdentityRegistry->lookup<IdentityRegistry::traci>(targetId);
-    //         if (identity) {
-    //             // トラッキング情報から、各センサのトラッキング情報を見る
-    //             for (const auto& sensor : tracking.sensors()) {
-    //                 // RadarSensorによる情報かどうかをチェック(CamSensorの情報は送らないようにする)
-    //                 if (mSensors.find(sensor.first) != mSensors.end()) {
-    //                     // センサーの有効期限内にその物体を認識しているかチェック
-    //                     if (sensor.second.last() + sensor.first->getValidityPeriod() >= omnetpp::simTime()) {
-    //                         // 対象車両の、各受信車両との危険度を計算
-    //                         for (auto rcvObject : mEnvironmentModel->allObjects()) {
-    //                             auto rcvTracking = rcvObject.second;
-    //                             std::shared_ptr<EnvironmentModelObject> rcvObj = rcvObject.first.lock();
-    //                             if (rcvObj) {
-    //                                 std::string rcvId = rcvObj->getExternalId();
-    //                                 auto rcvIdentity = mIdentityRegistry->lookup<IdentityRegistry::traci>(rcvId);
-    //                                 // 受信車両と対象車両が同じならスキップ
-    //                                 if (rcvId == targetId) continue;
-    //                                 if (rcvIdentity) {
-    //                                     // 受信車両が対象車両をセンシングしていなければ, 危険度クラスを計算
-    //                                     if (sensingIds.find(rcvId) != sensingIds.end() && sensingIds[rcvId].find(targetId) == sensingIds[rcvId].end()) {
-    //                                         auto f = [&](double t) -> double {
-    //                                             double targetX  = tracking.getPosX() + tracking.getSpeed() * sin(tracking.getHeading()) * (t - tracking.getLastTime().dbl());
-    //                                             double targetY = tracking.getPosY() - tracking.getSpeed() * cos(tracking.getHeading()) * (t - tracking.getLastTime().dbl());
-    //                                             double rcvX = rcvTracking.getPosX() + rcvTracking.getSpeed() * sin(rcvTracking.getHeading()) * (t - rcvTracking.getLastTime().dbl());
-    //                                             double rcvY = rcvTracking.getPosY() - rcvTracking.getSpeed() * cos(rcvTracking.getHeading()) * (t - rcvTracking.getLastTime().dbl());
-    //                                             double dist = std::sqrt(std::pow(targetX - rcvX, 2) + std::pow(targetY - rcvY, 2));
-    //                                             return dist;
-    //                                         };
-    //                                         int riskClass;
-    //                                         double collisionT = 0.0, offset = 0.8, thretholdD = 20.0, min_a = 4.5;
-    //                                         while (collisionT < 10 and f(collisionT) > thretholdD) {
-    //                                             collisionT += 0.1;
-    //                                         }
-    //                                         if (collisionT > offset + tracking.getSpeed() / min_a) riskClass = 0;
-    //                                         else targetInterval = std::min(mIntervalC1, targetInterval);
-    //                                         // double dist = round(distance(obj->getVehicleData().position(), rcvObj->getVehicleData().position()), vanetza::units::si::meter);
-    //                                         // double delta_vx = obj->getVehicleData().speed().value() * sin(obj->getVehicleData().heading().value()) - receiveObj->getVehicleData().speed().value() * sin(receiveObj->getVehicleData().heading().value());
-    //                                         // double delta_vy = obj->getVehicleData().speed().value() * -cos(obj->getVehicleData().heading().value()) - receiveObj->getVehicleData().speed().value() * -cos(receiveObj->getVehicleData().heading().value());
-    //                                         // auto reletiveVelocity = std::sqrt(delta_vx * delta_vx + delta_vy * delta_vy);
-
-
-
-    //                                         // if (mTraciId == "24.0" && targetId == "32.0" && receiveId == "0.0") {
-    //                                         //     std::cout << mTraciId <<" perceive " << receiveId << "not sensing " << targetId << ": dist=" << dist << ", vx=" << delta_vx << ", vy=" << delta_vy << ", reVel=" << reletiveVelocity << "\n";
-    //                                         // }
-    //                                     }
-    //                                 }
-    //                             }
-    //                         }
-    //                     }
-    //                     break;                
-    //                 }
-    //             }
-    //         }
-    //     }
-    // }
-
-    // 提案手法の実装：mChangeInterval[s]ごとに、各対象車両の送信間隔を決定
-    // if (mIntervalFlag && mLastChanged + mChangeInterval <= omnetpp::simTime()) {
-    //     using TrackedObject = LocalEnvironmentModel::TrackedObject;
-    //     auto allObjects = mEnvironmentModel->allObjects();
-    //     auto sensingIds = mEnvironmentModel->getSensingIds();
-    //     for (const TrackedObject& object : allObjects) {
-    //         const LocalEnvironmentModel::Tracking& tracking = object.second;
-    //         std::shared_ptr<EnvironmentModelObject> obj = object.first.lock();
-    //         if (obj) {
-    //             std::string targetId = obj->getExternalId();
-    //             auto identity = mIdentityRegistry->lookup<IdentityRegistry::traci>(targetId);
-    //             if (identity) {
-    //                 for (const auto& sensor : tracking.sensors()) {
-    //                     // RadarSensorによる情報かどうかをチェック(CamSensorの情報は送らないようにする)
-    //                     if (mSensors.find(sensor.first) != mSensors.end()) {
-    //                         // センサーの有効期限内にその物体を認識していなければ、スキップ
-    //                         if (sensor.second.last() + sensor.first->getValidityPeriod() < omnetpp::simTime()) continue; 
-                            
-    //                         omnetpp::SimTime targetInterval = mIntervalC1;
-    //                         // 各対象車両の危険度クラスを計算// 衝突時間がオフセット時間＋対処時間を超えていたら、危険度クラスは0
-    //                         for (auto rcvObject : mEnvironmentModel->allObjects()) {
-    //                             auto rcvTracking = rcvObject.second;
-    //                             std::shared_ptr<EnvironmentModelObject> rcvObj = rcvObject.first.lock();
-    //                             if (rcvObj) {
-    //                                 std::string rcvId = rcvObj->getExternalId();
-    //                                 // 受信車両と対象車両が同じならスキップ
-    //                                 auto rcvIdentity = mIdentityRegistry->lookup<IdentityRegistry::traci>(rcvId);
-    //                                 if (rcvId == targetId) continue;
-    //                                 if (rcvIdentity) {
-    //                                     // 受信車両が対象車両をセンシングしていなければ, 危険度クラスを計算
-    //                                     if (sensingIds.find(rcvId) != sensingIds.end()) {
-    //                                         if (sensingIds[rcvId].find(targetId) == sensingIds[rcvId].end()) {
-    //                                             // 2分探索で衝突時間を求める
-    //                                             // double collisionT, minT;
-    //                                             // int low = 0, high = 1000;
-    //                                             // double thretholdD = 20.0;
-    //                                             // double offset = 0.8, min_a = 4.5;
-    //                                             // auto f = [&](int c) -> double {
-    //                                             //     double t = (double) c / 10.0;
-    //                                             //     double targetX  = tracking.getPosX() + tracking.getSpeed() * sin(tracking.getHeading()) * (t - tracking.getLastTime().dbl());
-    //                                             //     double targetY = tracking.getPosY() - tracking.getSpeed() * cos(tracking.getHeading()) * (t - tracking.getLastTime().dbl());
-    //                                             //     double rcvX = rcvTracking.getPosX() + rcvTracking.getSpeed() * sin(rcvTracking.getHeading()) * (t - rcvTracking.getLastTime().dbl());
-    //                                             //     double rcvY = rcvTracking.getPosY() - rcvTracking.getSpeed() * cos(rcvTracking.getHeading()) * (t - rcvTracking.getLastTime().dbl());
-    //                                             //     double dist = std::sqrt(std::pow(targetX - rcvX, 2) + std::pow(targetY - rcvY, 2));
-    //                                             //     return dist;
-    //                                             // };
-                                               
-    //                                             // while(high - low > 2) {
-    //                                             //     int c1 = (low * 2 + high) / 3, c2 = (low + 2 * high) / 3;
-    //                                             //     if (f(c1) < f(c2)) high = c2;
-    //                                             //     else low = c1;
-    //                                             // }
-    //                                             // minT = (double) std::min({f(low), f(low+1), f(low+2), f(high)}) / 10.0;
-    //                                             // low = 0, high = minT * 10;
-    //                                             // while(high - low > 1) {
-    //                                             //     int mid = (low + high) / 2;
-    //                                             //     if (f(mid) < thretholdD) high = mid;
-    //                                             //     else low = mid; 
-    //                                             // }
-                                                
-    //                                             // collisionT = (double) high / 10.0;
-    //                                             auto f = [&](double t) -> double {
-    //                                                 double targetX  = tracking.getPosX() + tracking.getSpeed() * sin(tracking.getHeading()) * (omnetpp::simTime().dbl() + t - tracking.getLastTime().dbl());
-    //                                                 double targetY = tracking.getPosY() - tracking.getSpeed() * cos(tracking.getHeading()) * (omnetpp::simTime().dbl() + t - tracking.getLastTime().dbl());
-    //                                                 double rcvX = rcvTracking.getPosX() + rcvTracking.getSpeed() * sin(rcvTracking.getHeading()) * (omnetpp::simTime().dbl() + t - rcvTracking.getLastTime().dbl());
-    //                                                 double rcvY = rcvTracking.getPosY() - rcvTracking.getSpeed() * cos(rcvTracking.getHeading()) * (omnetpp::simTime().dbl() + t - rcvTracking.getLastTime().dbl());
-    //                                                 double dist = std::sqrt(std::pow(targetX - rcvX, 2) + std::pow(targetY - rcvY, 2));
-    //                                                 return dist;
-    //                                             };
-    //                                             double collisionT = 0.0;
-    //                                             while (collisionT < 10 && f(collisionT) > thretholdD) {
-    //                                                 collisionT += 0.1;
-    //                                             }
-    //                                             // 衝突時間がオフセット時間＋対処時間を未満なら、危険度クラスは0
-    //                                             if (collisionT < offset + tracking.getSpeed() / min_a) targetInterval = std::min(mIntervalC0, targetInterval);
-    //                                             else targetInterval = std::min(mIntervalC1, targetInterval);
-    //                                             // if (mTraciId == "60.0" && targetId == "228.0") std::cout << rcvId << ": " << collisionT << ", " << offset + tracking.getSpeed() / min_a << "\n";
-    //                                         }
-    //                                     }
-    //                                 }
-    //                             }
-    //                         }
-
-
-    //                         // 対象車両と、その車両をセンシングしている車両との間の距離順が優先度を割り当て、allowedSentNum台以降の送信間隔を無限に変更
-    //                         std::vector<std::pair<double, std::string>> sensedDist;
-    //                         auto sensedIds = tracking.getSensedIds();
-    //                         for (auto sensedId: sensedIds) {
-    //                             auto sensedObject = mGlobalEnvironmentModel->getObject(sensedId.first);
-    //                             auto foundObject = allObjects.find(sensedObject);
-    //                             if (foundObject != allObjects.end()) {
-    //                                 const LocalEnvironmentModel::Tracking& sensedTracking = foundObject->second;
-    //                                 double estimatedPosX = sensedTracking.getPosX() + sensedTracking.getSpeed() * sin(sensedTracking.getHeading()) * (obj->getVehicleData().updated().dbl() - sensedTracking.getLastTime().dbl());
-    //                                 double estimatedPosY = sensedTracking.getPosY() - sensedTracking.getSpeed() * cos(sensedTracking.getHeading()) * (obj->getVehicleData().updated().dbl() - sensedTracking.getLastTime().dbl()) ;
-    //                                 double dist = std::sqrt(std::pow(estimatedPosX -  obj->getVehicleData().position().x.value(), 2) + std::pow(estimatedPosY -  obj->getVehicleData().position().y.value(), 2));
-    //                                 // if (mTraciId == "36.0" && targetId == "66.0") std::cout << "  " << targetId << " <-> " << sensedId.first << ": dist = " << dist << "m \n";
-    //                                 sensedDist.emplace_back(dist, sensedId.first);
-    //                             }
-    //                         }
-    //                         // 対象車両と自車両間の距離を計算
-    //                         auto dist = std::sqrt(std::pow(mVehicleDataProvider->position().x.value() -  obj->getVehicleData().position().x.value(), 2) + std::pow(mVehicleDataProvider->position().y.value() -  obj->getVehicleData().position().y.value(), 2));
-    //                         sensedDist.emplace_back(dist, mTraciId);
-    //                         // 距離に応じてセンシング車両をソート
-    //                         std::sort(sensedDist.begin(), sensedDist.end());
-    //                         int myPriority = 0;
-    //                         for (auto it = sensedDist.begin(); it != sensedDist.end(); it++) {
-    //                             if (it->second == mTraciId) break;
-    //                             else myPriority++;
-    //                         }
-    //                         if (myPriority >= mAllowedSentNum) mIntervals[targetId] = omnetpp::SimTime { 50000, SIMTIME_MS };
-    //                         else mIntervals[targetId] = targetInterval;
-    //                         // if (targetId == "66.0") std::cout << " " << mTraciId << ", priority: " << myPriority << "\n";
-    //                         // if (targetId == "228.0") std::cout << mTraciId << " send: interval = " << mIntervals[targetId] << " s \n";
-    //                     }
-    //                 }
-    //             }
-    //         }
-    //     }
-    //     mLastChanged = omnetpp::simTime();
-    // } 
-    // 各車両の危険度を計算
-    // if (mTraciId == "24.0") std::cout << mTraciId << "\n";
-    // using TrackedObject = LocalEnvironmentModel::TrackedObject;
-    // auto sensingIds = mEnvironmentModel->getSensingIds();
-    // for (const TrackedObject& object : mEnvironmentModel->allObjects()) {
-    //     const LocalEnvironmentModel::Tracking& tracking = object.second;
-    //     std::shared_ptr<EnvironmentModelObject> obj = object.first.lock();
-    //     if (obj) {
-    //         std::string tgtId = obj->getExternalId();
-    //         auto identity = mIdentityRegistry->lookup<IdentityRegistry::traci>(tgtId);
-    //         if (identity) {
-    //             // トラッキング情報から、各センサのトラッキング情報を見る
-    //             for (const auto& sensor : tracking.sensors()) {
-    //                 // RadarSensorによる情報かどうかをチェック(CamSensorの情報は送らないようにする)
-    //                 if (mSensors.find(sensor.first) != mSensors.end()) {
-    //                     // センサーの有効期限内にその物体を認識していなければ、スキップ
-    //                     if (sensor.second.last() + sensor.first->getValidityPeriod() < omnetpp::simTime()) continue; 
-
-    //                     // 対象車両の危険度を計算
-    //                     // if (mTraciId == "24.0"  && tgtId == "32.0") std::cout << "tgtId: " << tgtId << "\n";
-    //                     double sum_w = 0, sum_wx = 0, sum_wy = 0;
-    //                     for (auto rcvObject : mEnvironmentModel->allObjects()) {
-    //                         auto rcvTracking = rcvObject.second;
-    //                         std::shared_ptr<EnvironmentModelObject> rcvObj = rcvObject.first.lock();
-    //                         if (rcvObj) {
-    //                             std::string rcvId = rcvObj->getExternalId();
-    //                             // 受信車両と対象車両が同じならスキップ
-    //                             auto rcvIdentity = mIdentityRegistry->lookup<IdentityRegistry::traci>(rcvId);
-    //                             if (rcvId == tgtId) continue;
-    //                             if (rcvIdentity) {
-    //                                 // 受信車両が対象車両をセンシングしていなければ, 危険度の計算に組み込む
-                                    
-    //                                 if (sensingIds.find(rcvId) != sensingIds.end()) {
-    //                                     if (sensingIds[rcvId].find(tgtId) == sensingIds[rcvId].end()) {
-    //                                         double w = 300 - std::sqrt(std::pow(tracking.getPosX() - rcvTracking.getPosX(), 2.0) + std::pow(tracking.getPosY() - rcvTracking.getPosY(), 2.0));
-    //                                         if (w >= 0) {
-    //                                             double delta_vx = abs((double) tracking.getSpeed() * sin(tracking.getHeading()) - (double) rcvTracking.getSpeed() * sin(rcvTracking.getHeading()));
-    //                                             double delta_vy = abs((double) tracking.getSpeed() * cos(tracking.getHeading()) - (double) rcvTracking.getSpeed() * cos(rcvTracking.getHeading()));
-    //                                             sum_wx += w * delta_vx;
-    //                                             sum_wy += w * delta_vy;
-    //                                             sum_w += w;
-    //                                             // if (mTraciId == "24.0" && tgtId == "32.0") {
-    //                                             //     std::cout <<  "tgtId<->rcvId: " << rcvId << " w: " << w << "m, " << delta_vx << "m/s, " << delta_vy << "\n"; 
-    //                                             // }
-    //                                         }
-    //                                     }
-    //                                     // else {
-    //                                     //     if (mTraciId == "24.0" && tgtId == "32.0" && rcvId == "0.0") {
-    //                                     //     std::cout << mTraciId <<" perceive " << rcvId << "sensing " << tgtId << "\n";
-    //                                     //     }
-    //                                     // }
-    //                                 }
-    //                             }
-    //                         }
-    //                     }
-    //                     double delta_vx = 0, delta_vy = 0;
-    //                     if (sum_w != 0) {
-    //                         delta_vx = sum_wx / sum_w;
-    //                         delta_vy = sum_wy / sum_w;
-    //                     }
-    //                     double delta_v = sqrt(delta_vx * delta_vx + delta_vy * delta_vy);
-    //                     double risk = delta_v / 2 / 16.67;
-    //                     mRiskMap[tgtId] = risk;
-
-    //                     emit(riskSignal, risk);
-    //                     emit(riskPosXSignal, obj->getVehicleData().position().x.value());
-    //                     emit(riskPosYSignal, obj->getVehicleData().position().y.value());
-    //                     emit(riskSpeedSignal, obj->getVehicleData().speed().value());
-    //                     emit(riskHeadingSignal, obj->getVehicleData().heading().value());
-    //                     emit(riskAccelerationSignal, obj->getVehicleData().acceleration().value());
-    //                     emit(riskYawrateSignal, obj->getVehicleData().yaw_rate().value());
-    //                     // if (mTraciId == "30.0" && tgtId == "55.0") 
-    //                     //     std::cout << tgtId << ": delta_vx: " << delta_vx << ", delta_vy: " << delta_vy << ": row:" << row << "\n";
-    //                 }
-    //             }
-    //         }
-    //     }
-    // }    
 }
 
 // CPM受信時に呼び出されるメソッド
@@ -876,16 +545,8 @@ void CollectivePerceptionMockService::generatePacket()
     std::vector<std::tuple<double, int, std::string>> proposedSentAllowedObjects = {};
     // 提案手法のパラメータ
     double max_v = 16.67, max_a = 3.81, min_a = 8.35, w = 0.437, length = 5.0, width = 1.8;
-    int max_t = 20; // 100ms単位
+    int max_t = 40; // 100ms単位
 
-    // double max_collisionT = 10.0, offset = 10.0, alpha = 0.25, thresholdD = 20;
-    // auto getThresholdD = [&](double collisionT, double v) -> double {
-    //     // double dist = std::min(max_a * collisionT * collisionT / 2.0, max_thresholdD);
-    //     double dist = alpha * v * collisionT  + offset;
-    //     // if (mTraciId == "0.0") std::cout << "thresholdD = " << dist << " m\n";
-    //     return dist;
-    // };
-    
     int cpmContainedAllCnt = 0;
     auto allObjects = mEnvironmentModel->allObjects();
     for (const TrackedObject& object : allObjects) {
@@ -895,27 +556,10 @@ void CollectivePerceptionMockService::generatePacket()
         std::shared_ptr<EnvironmentModelObject> obj = object.first.lock();
         std::string targetId = tracking.traci();
         if (obj) {
-            // std::cout << obj->getExternalId() << "\n";
-            // round(obj->getVehicleData().position().x, vanetza::units::si::meter) << "m, " << 
-            // round(obj->getVehicleData().speed(), centimeter_per_second) * SpeedValue_oneCentimeterPerSec << "cm/s, " <<
-            // round(obj->getVehicleData().heading(), decidegree) << "deci°" << "\n";
             // 物体のアイデンディティが存在するかチェック
             auto identity = mIdentityRegistry->lookup<IdentityRegistry::traci>(obj->getExternalId());
             if (!identity) continue;
         } else continue;
-                    // if (!mIntervalFlag) { 
-                    // ETSIの標準に基づき、動的なルールでチェック
-                    // if (!checkNewSentCpm(object.first) && 
-                    // !checkTimeDelta(obj) && 
-                    // !checkPositionDelta(obj) && 
-                    // !checkSpeedDelta(obj) && 
-                    // !checkHeadingDelta(obj)) continue;
-                // }
-        //     } else continue;
-        // } else {
-        //     // std::cout << "object expired\n";
-        //     continue;
-        // }
 
         // トラッキング情報から、各センサのトラッキング情報を見る
         for (const auto& sensor : tracking.sensors()) {
@@ -924,16 +568,6 @@ void CollectivePerceptionMockService::generatePacket()
                 // センサーの有効期限内にその物体を認識していなければ、スキップ
                 if (sensor.second.last() + sensor.first->getValidityPeriod() < omnetpp::simTime()) continue; 
                 cpmContainedAllCnt++;
-                // 周期的に送信する場合
-                // if (mIntervalFlag) {
-                //     if (mIntervals.find(targetId) == mIntervals.end()) {
-                //         // mIntervals[targetId] = rand() % 2 == 0 ? mIntervalC0 : mIntervalC1;
-                //         mIntervals[targetId] = mIntervalC0;
-                //         mLastSent[targetId] = omnetpp::simTime();
-                //     } else {
-                //         if (mIntervals[targetId] + mLastSent[targetId] > omnetpp::simTime()) continue;
-                //     }
-                // } else { 
 
                 // ここに提案手法を実装: 各対象車両の危険係数を計算して、ソート
                 if (mProposedFlag || mOnlyCollisionTimeFlag || mProposedFlag2) {
@@ -1073,22 +707,6 @@ void CollectivePerceptionMockService::generatePacket()
                                     //     std::cout << rcvId << ": " << r << "\n";
                                     // }
                                 }
-                                // if (sensingIds.find(rcvId) != sensingIds.end() && sensingIds[rcvId].find(targetId) == sensingIds[rcvId].end()) {
-                                //     auto getDist = [&](double t) -> double {
-                                //         double targetX  = tracking.getPosX() + tracking.getSpeed() * sin(tracking.getHeading()) * (omnetpp::simTime().dbl() + t - tracking.getLastTime().dbl());
-                                //         double targetY = tracking.getPosY() - tracking.getSpeed() * cos(tracking.getHeading()) * (omnetpp::simTime().dbl() + t - tracking.getLastTime().dbl());
-                                //         double rcvX = rcvTracking.getPosX() + rcvTracking.getSpeed() * sin(rcvTracking.getHeading()) * (omnetpp::simTime().dbl() + t - rcvTracking.getLastTime().dbl());
-                                //         double rcvY = rcvTracking.getPosY() - rcvTracking.getSpeed() * cos(rcvTracking.getHeading()) * (omnetpp::simTime().dbl() + t - rcvTracking.getLastTime().dbl());
-                                //         double dist = std::sqrt(std::pow(targetX - rcvX, 2) + std::pow(targetY - rcvY, 2));
-                                //         return dist;
-                                //     };
-                                //     double collisionT = 0.0;
-                                //     while (collisionT < max_collisionT && getDist(collisionT) > getThresholdD(collisionT, tracking.getSpeed())) {
-                                //         collisionT += 0.1;
-                                //     }
-                                //     // if (mTraciId == "0.1" && targetId == "0.0") std::cout << rcvId << ": cT = " << collisionT << "s, d = " <<  getDist(collisionT) << "m, td = " <<  getThresholdD(collisionT, tracking.getSpeed()) << "m\n";
-                                //     minCollisionTime = std::min(collisionT, minCollisionTime);
-                                // }
                             }
                         }
                     } 
