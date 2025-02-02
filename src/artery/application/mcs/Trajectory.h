@@ -30,12 +30,12 @@ public:
 	static constexpr double TIME_LENGTH = 5.0; // 軌跡の時間長
 
 	// getter
-	const std::vector<double>& getPoses() { return mPoses; };
-	const std::vector<double>& getSpeeds() { return mSpeeds; };
-	const std::vector<double>& getAccels() { return mAccels; };
-	const std::vector<double>& getJerks() { return mJerks; };
-	const double getConvergenceTime() { return mConvergenceTime; };
-	const double getTargetSpeed() { return mTargetSpeed; };
+	const std::vector<double>& getPoses() const { return mPoses; };
+	const std::vector<double>& getSpeeds() const { return mSpeeds; };
+	const std::vector<double>& getAccels() const { return mAccels; };
+	const std::vector<double>& getJerks() const { return mJerks; };
+	const double getConvergenceTime() const { return mConvergenceTime; };
+	const double getTargetSpeed() const { return mTargetSpeed; };
 private:
   
 	std::vector<double> mPoses; // 位置配列
