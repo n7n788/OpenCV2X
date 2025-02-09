@@ -24,8 +24,6 @@ Trajectory::Trajectory(const artery::QuinticPolynomial& qp) {
 	for (double t = 0.0; t < TIME_LENGTH; t += TIME_STEP) {
 		mJerks.emplace_back(qp.calc_third_derivative(t));
 	}
-	mConvergenceTime = qp.getConvergenceTime();
-	mTargetSpeed = qp.getTargetSpeed();
 }
 
 Trajectory::Trajectory(const artery::QuarticPolynomial& qp) {
@@ -45,8 +43,6 @@ Trajectory::Trajectory(const artery::QuarticPolynomial& qp) {
 	for (double t = 0.0; t < TIME_LENGTH; t += TIME_STEP) {
 		mJerks.emplace_back(qp.calc_third_derivative(t));
 	}
-	mConvergenceTime = qp.getConvergenceTime();
-	mTargetSpeed = qp.getTargetSpeed();
 }
 
 }
@@ -62,7 +58,6 @@ int main() {
 	artery::Trajectory tj1(qp1);
 	artery::Trajectory tj2(qp2);
 
-	std::cout << "Convergence time: " << tj1.getConvergenceTime() << std::endl;
 	for (int i = 0; i < tj1.getPoses().size(); i++) {
 		std::cout << "pos: " << tj1.getPoses().at(i) << " "
 				  << "speed: " << tj1.getSpeeds().at(i) << " "
@@ -70,7 +65,6 @@ int main() {
 				  << "jerk: " << tj1.getJerks().at(i) << std::endl;
 	}
 
-	std::cout << "Convergence time: " << tj2.getConvergenceTime() << std::endl;
 	for (int i = 0; i < tj2.getPoses().size(); i++) {
 		std::cout << "pos: " << tj2.getPoses().at(i) << " "
 				  << "speed: " << tj2.getSpeeds().at(i) << " "

@@ -17,19 +17,41 @@ public:
 
     /*
         * 自由走行の経路の候補を生成 
-        * @param mLonPos [double]   現在の縦方向の位置 
-        * @param mLonSpeed [double] 現在の縦方向の速度
-        * @param mLonAccel [double] 現在の縦方向の加速度 
-        * @param mLatPos [double]   現在の横方向の位置 
-        * @param mLatSpeed [double] 現在の横方向の速度 
-        * @param mLatAccel [double] 現在の横方向の加速度 
-        * @param mTargetLatMaxSpeed [double]    目標の縦方向の速度の最大値
-        * @param mTargetlatPoses [vector<double>]  目標の横方向の位置 
-        * @param mConvergenceTime [double] 収束時間 
+        * @param latPos [double]   現在の縦方向の位置 [m] 
+        * @param latSpeed [double] 現在の縦方向の速度 [m/s]
+        * @param latAccel double] 現在の縦方向の加速度 [m/s^2] 
+        * @param lonPos [double]   現在の横方向の位置 [m] 
+        * @param lonSpeed [double] 現在の横方向の速度 [m/s] 
+        * @param lonAccel [double] 現在の横方向の加速度 [m/s^2] 
+        * @param maxTargetLatSpeed [double] 目標の縦方向の速度の最大値 [m/s]
+        * @param targetLonPoses [vector<double>]  目標の横方向の位置 [m] 
+        * @param convergenceTime [double] 収束時間 [s] 
     */
-    std::vector<FrenetPath> generateFreePathCandidates(double mLonPos, double mLonSpeed, double mLonAccel, 
-        double mLatPos, double mLatSpeed, double mLatAccel, 
-        double mTargetLatMaxSpeed, std::vector<double> mTargetLatPoses, double mConvergenceTime);
+    std::vector<FrenetPath> generateFreePathCandidates(double latPos, double latSpeed, double latAccel, 
+        double lonPos, double lonSpeed, double lonAccel, 
+        double maxTargetLatSpeed, std::vector<double> targetLonPoses, double convergenceTime);
+    
+    /*
+        * 追従の経路の候補を生成 
+        * @param latPos [double]   現在の縦方向の位置 [m] 
+        * @param latSpeed [double] 現在の縦方向の速度 [m/s]
+        * @param latAccel double] 現在の縦方向の加速度 [m/s^2] 
+        * @param lonPos [double]   現在の横方向の位置 [m] 
+        * @param lonSpeed [double] 現在の横方向の速度 [m/s] 
+        * @param lonAccel [double] 現在の横方向の加速度 [m/s^2] 
+        * @param maxTargetLatPos [double] 最大の目標の位置 [m]
+        * @param targetLatSpeed [double]   目標の縦方向の速度 [m/s]
+        * @param convergenceTime [double] 収束時間 [s] 
+    */
+    std::vector<FrenetPath> generateFollowingPathCandidates(double latPos, double latSpeed, double latAccel, 
+        double lonPos, double lonSpeed, double lonAccel, 
+        double maxTargetLatPos, double targetLatSpeed, double convergenceTime);
+    
+    /*
+        * コストが最小の経路を選択
+        @return [FrenetPath] コストが最小の経路
+    */ 
+    FrenetPath selectMinCostPath(const std::vector<FrenetPath>& pathCandidates);
 };
 }
 #endif /* ARTERY_FRENETPLANNING_H */

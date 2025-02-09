@@ -6,8 +6,8 @@
 
 namespace artery {
 
-class QuarticPolynomial {
-
+class QuarticPolynomial
+{
 public:
 
 	/*
@@ -50,14 +50,8 @@ public:
      */
     double calc_third_derivative(double t) const;
 
-    // getter
-    double getConvergenceTime() const { return convergenceTime; }
-    double getTargetSpeed() const { return targetSpeed; }
 private:
-    
 	double a0, a1, a2, a3, a4; // 多項式の係数
-    double convergenceTime; // 収束時間
-    double targetSpeed; // 収束速度
 };
 
 } // namespace artery

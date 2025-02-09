@@ -27,9 +27,6 @@ QuinticPolynomial::QuinticPolynomial(double xs, double vxs, double axs, double x
     a3 = x[0];
     a4 = x[1];
     a5 = x[2];
-
-    this->convergenceTime = time;
-    this->targetSpeed = vxe;
 }
 
 // Calculate position at time t
@@ -67,8 +64,6 @@ int main() {
     std::cout << "Velocity at t = " << t << ": " << qp.calc_first_derivative(t) << std::endl;
     std::cout << "Acceleration at t = " << t << ": " << qp.calc_second_derivative(t) << std::endl;
     std::cout << "Jerk at t = " << t << ": " << qp.calc_third_derivative(t) << std::endl;
-    std::cout << "Time: " << qp.getConvergenceTime() << std::endl;
-    std::cout << "Speed: " << qp.getTargetSpeed() << std::endl;
     return 0;
 }
 #endif
