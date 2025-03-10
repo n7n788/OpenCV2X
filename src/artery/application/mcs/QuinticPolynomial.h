@@ -1,12 +1,13 @@
 #ifndef QUINTIC_POLYNOMIAL_H
 #define QUINTIC_POLYNOMIAL_H
 
+#include "Polynomial.h"
 #include <Eigen/Dense>
 #include <cmath>
 
 namespace artery {
 
-class QuinticPolynomial {
+class QuinticPolynomial : public Polynomial {
 
 public:
     

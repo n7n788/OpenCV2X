@@ -1,4 +1,5 @@
 #include "Trajectory.h"
+#include "Polynomial.h"
 #include "QuinticPolynomial.h"
 #include "QuarticPolynomial.h"
 #include <vector>
@@ -7,41 +8,22 @@
 namespace artery
 {
 
-Trajectory::Trajectory(const artery::QuinticPolynomial& qp) {
+Trajectory::Trajectory(const artery::Polynomial& p) {
 	// 位置を追加
 	for (double t = 0.0; t < TIME_LENGTH; t += TIME_STEP) {
-		mPoses.emplace_back(qp.calc_point(t));
+		mPoses.emplace_back(p.calc_point(t));
 	}
 	// 速度を追加
 	for (double t = 0.0; t < TIME_LENGTH; t += TIME_STEP) {
-		mSpeeds.emplace_back(qp.calc_first_derivative(t));
+		mSpeeds.emplace_back(p.calc_first_derivative(t));
 	}
 	// 加速度を追加
 	for (double t = 0.0; t < TIME_LENGTH; t += TIME_STEP) {
-		mAccels.emplace_back(qp.calc_second_derivative(t));
+		mAccels.emplace_back(p.calc_second_derivative(t));
 	}
 	// ジャーク追加
 	for (double t = 0.0; t < TIME_LENGTH; t += TIME_STEP) {
-		mJerks.emplace_back(qp.calc_third_derivative(t));
-	}
-}
-
-Trajectory::Trajectory(const artery::QuarticPolynomial& qp) {
-	// 位置を追加
-	for (double t = 0.0; t < TIME_LENGTH; t += TIME_STEP) {
-		mPoses.emplace_back(qp.calc_point(t));
-	}
-	// 速度を追加
-	for (double t = 0.0; t < TIME_LENGTH; t += TIME_STEP) {
-		mSpeeds.emplace_back(qp.calc_first_derivative(t));
-	}
-	// 加速度を追加
-	for (double t = 0.0; t < TIME_LENGTH; t += TIME_STEP) {
-		mAccels.emplace_back(qp.calc_second_derivative(t));
-	}	
-	// ジャーク追加
-	for (double t = 0.0; t < TIME_LENGTH; t += TIME_STEP) {
-		mJerks.emplace_back(qp.calc_third_derivative(t));
+		mJerks.emplace_back(p.calc_third_derivative(t));
 	}
 }
 
