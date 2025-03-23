@@ -191,7 +191,7 @@ simple CollectivePerceptionMockService like ItsG5Service
         double alpha = default(1); // 提案手法バージョン2で使用するパラメータ
         double beta = default(10); // 提案手法バージョン2で使用するパラメータ
 
-
+        // 以下は使用してない
         bool proposedFlag = default(false); // 提案手法を使用するかどうか
         bool randomFlag = default(false); // CPMに含める物体を完全にランダムに決めるかどうか
         bool onlyCollisionTimeFlag = default(false); // 衝突予測時間のみから決めるかどうか

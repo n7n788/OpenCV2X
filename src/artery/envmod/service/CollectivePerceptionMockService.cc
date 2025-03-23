@@ -241,7 +241,7 @@ void CollectivePerceptionMockService::trigger()
 
     // 2023-12-18 パラメータ
     double max_v = 16.67, max_a = 3.81, min_a = 8.35, w = 0.437, length = 5.0, width = 1.8;
-    int max_t = 20; // 100ms単位
+    int max_t = 40; // 100ms単位
     double posX = round(mVehicleDataProvider->position().x, vanetza::units::si::meter);
     double posY = round(mVehicleDataProvider->position().y, vanetza::units::si::meter);
     auto sensingIds = mEnvironmentModel->getSensingIds();
@@ -510,8 +510,8 @@ void CollectivePerceptionMockService::generatePacket()
     std::vector<std::tuple<double, int, std::string>> proposedSentAllowedObjects = {};
     // 提案手法のパラメータ
     double max_v = 16.67, max_a = 3.81, min_a = 8.35, w = 0.437, length = 5.0, width = 1.8;
-    int max_t = 20; // 100ms単位
-    
+    int max_t = 40; // 100ms単位
+
     int cpmContainedAllCnt = 0;
     auto allObjects = mEnvironmentModel->allObjects();
     for (const TrackedObject& object : allObjects) {
@@ -521,10 +521,6 @@ void CollectivePerceptionMockService::generatePacket()
         std::shared_ptr<EnvironmentModelObject> obj = object.first.lock();
         std::string targetId = tracking.traci();
         if (obj) {
-            // std::cout << obj->getExternalId() << "\n";
-            // round(obj->getVehicleData().position().x, vanetza::units::si::meter) << "m, " << 
-            // round(obj->getVehicleData().speed(), centimeter_per_second) * SpeedValue_oneCentimeterPerSec << "cm/s, " <<
-            // round(obj->getVehicleData().heading(), decidegree) << "deci°" << "\n";
             // 物体のアイデンディティが存在するかチェック
             auto identity = mIdentityRegistry->lookup<IdentityRegistry::traci>(obj->getExternalId());
             if (!identity) continue;

@@ -1,11 +1,11 @@
 scenarios/**/*.pyc
-scenarios/*/results/Base/*.png
 scenarios/*/results/Base/*.csv
 scenarios/*/results/Base/*.txt
 scenarios/*/results/Base/*.sca
 scenarios/*/results/Base/*.vec
 scenarios/*/results/Base/*.vci
 scenarios/*/results/Base/*.log
+scenarios/*/results/Base/*.png
 scenarios/*/.tkenvrc
 scenarios/personal-*/
 
