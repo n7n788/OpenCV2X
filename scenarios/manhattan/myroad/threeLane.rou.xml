@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<routes xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://sumo.dlr.de/xsd/routes_file.xsd">
+    <vType id="CAV_0" accel="3.0" decel="5.0" maxSpeed="20.0" length="5"/>
+    <vType id="CAV_1" accel="3.0" decel="5.0" maxSpeed="20.0" length="5"/>
+    <vType id="non-CAV" accel="3.0" decel="5.0" maxSpeed="20.0" length="5" carFollowModel="IDM" laneChangeModel="LC2013" lcSpeedGain="0"/>
+    <vType id="track" accel="3.0" decel="5.0" maxSpeed="5.0" length="10" carFollowModel="IDM" laneChangeModel="LC2013" lcSpeedGain="0"/>
+
+    <route id="main" edges="main"/>
+
+    <flow id="0" begin="0" end="10" number="2" route="main" type="CAV_0"/>
+</routes>

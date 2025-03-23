@@ -65,7 +65,7 @@ public:
     // 追加　
     void setGenerationDeltaTime(uint16_t time) { mGenerationDeltaTime = time; }
     uint16_t getGenerationDeltaTime() const { return mGenerationDeltaTime; }
-    
+     
     omnetpp::cPacket* dup() const override;
 
     // 追加 sumoのIDを返すメソッド

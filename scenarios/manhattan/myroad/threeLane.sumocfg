@@ -1,0 +1,14 @@
+<configuration>
+<input>
+    <net-file value="threeLane.net.xml"/>
+    <route-files value="threeLane.rou.xml"/>
+    <collision.action value="none"/>
+</input>
+<output>
+</output>
+<time>
+    <step-length value="0.1"/>
+    <begin value="0.0"/>
+    <end value="6000.0"/>
+</time>
+</configuration>

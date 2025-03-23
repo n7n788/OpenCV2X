@@ -1,0 +1,186 @@
+                                                                
+version 2
+run Base-0-20241111-19:58:48-8029
+attr configname Base
+attr datetime 20241111-19:58:48
+attr experiment Base
+attr inifile omnetpp.ini
+attr iterationvars ""
+attr iterationvarsf ""
+attr measurement ""
+attr network artery.envmod.World
+attr processid 8029
+attr repetition 0
+attr replication #0
+attr resultdir results
+attr runnumber 0
+attr seedset 0
+param *.traci.launcher.sumocfg "\"myroad/hello.sumocfg.xml\""
+param *.traci.launcher.sumo "\"sumo-gui\""
+param **.lteNic.phy.channelModel "xmldoc(\"config_channel.xml\")"
+param **.feedbackComputation "xmldoc(\"config_channel.xml\")"
+param *.node[*].d2dCapable true
+param *.node[*].mode4D2D true
+param **.amcMode "\"D2D\""
+param *.node[*].nicType "\"LteNicVUeMode4\""
+param *.node[*].lteNic.d2dCapable true
+param *.node[*].lteNic.pdcpRrc.ipBased false
+param *.node[*].lteNic.rlc.ipBased false
+param *.node[*].lteNic.mac.subchannelSize 16
+param *.node[*].lteNic.mac.numSubchannels 3
+param *.node[*].lteNic.mac.probResourceKeep 0.4
+param *.node[*].lteNic.mac.useCBR false
+param *.node[*].lteNic.mac.crLimit false
+param *.node[*].lteNic.mac.rriLookup false
+param *.node[*].lteNic.mac.dccMechanism false
+param *.node[*].lteNic.mac.packetDropping false
+param *.node[*].lteNic.mac.reselectAfter 1
+param *.node[*].lteNic.mac.adjacencyPSCCHPSSCH true
+param *.node[*].lteNic.rlc.um.packetSize 190
+param *.node[*].lteNic.rlc.um.scenario3gpp false
+param *.node[*].lteNic.phy.subchannelSize 16
+param *.node[*].lteNic.phy.numSubchannels 3
+param *.node[*].lteNic.phy.selectionWindowStartingSubframe 1
+param *.node[*].lteNic.phy.adjacencyPSCCHPSSCH true
+param *.node[*].lteNic.phy.pStep 100
+param *.node[*].lteNic.phy.thresholdRSSI 10
+param *.node[*].ueTxPower 23
+param **.usePreconfiguredTxParams true
+param *.node[*].application.typename "\"artery.lte.Mode4Application\""
+param *.node[*].application.middleware.updateInterval 0.1s
+param *.node[*].application.middleware.datetime "\"2013-06-01 12:35:00\""
+param *.node[*].application.middleware.services "xmldoc(\"services.xml\")"
+param **.lteNic.mac.txConfig "xmldoc(\"sidelink_configuration.xml\")"
+param *.node[*].middleware.updateInterval 0.1s
+param *.node[*].middleware.datetime "\"2018-01-17 13:44:00\""
+param *.node[*].middleware.services "xmldoc(\"services.xml\")"
+param *.node[*].middleware.CaService.withDccRestriction false
+param *.node[*].vanetza.dcc.TransmitRateControl "\"NoTransmitRateControl\""
+param *.node[*].middleware.CollectivePerceptionMockService.dccProfile 3
+param *.node[*].middleware.CollectivePerceptionMockService.cpmInterval 0.1
+param *.node[*].middleware.CP.lowerPosX 300
+param *.node[*].middleware.CP.upperPosX 700
+param *.node[*].middleware.CP.lowerPosY -1000
+param *.node[*].middleware.CP.upperPosY 1000
+param *.node[*].lteNic.phy.lowerPosX 300
+param *.node[*].lteNic.phy.upperPosX 700
+param *.node[*].lteNic.phy.lowerPosY -1000
+param *.node[*].lteNic.phy.upperPosY 1000
+param *.node[*].environmentModel.sensors "xmldoc(\"sensors.xml\")"
+param *.node[*].environmentModel.CircularRadar.fovRange 150m
+param *.node[*].environmentModel.CircularRadar.fovAngle 359
+param *.node[*].environmentModel.CircularRadar.numSegments 10
+param **.identityRegistryModule "\"idRegistry\""
+param *.traci.mapper.vehicleType "\"artery.envmod.Car\""
+param *.environmentModel.obstacleTypes "\"building shop\""
+param *.environmentModel.traciModule "\"traci\""
+param *.environmentModel.nodeMobilityModule "\".mobility\""
+param **.coreDebug false
+param **.routingRecorder.enabled false
+param *.playgroundSizeX 20000m
+param *.playgroundSizeY 20000m
+param *.playgroundSizeZ 50m
+param *.traci.core.version -1
+param *.traci.launcher.typename "\"PosixLauncher\""
+param *.traci.core.startTime 1s
+param **.deployer.positionUpdateInterval 0.001s
+param **.channelControl.pMax 10W
+param **.channelControl.alpha 1.0
+param **.channelControl.carrierFrequency 6000e+6Hz
+param **.rbAllocationType "\"localized\""
+param **.feedbackType "\"ALLBANDS\""
+param **.feedbackGeneratorType "\"IDEAL\""
+param **.maxHarqRtx 0
+param **.deployer.ruRange 50
+param **.deployer.ruTxPower "\"50,50,50;\""
+param **.deployer.antennaCws "\"2;\""
+param **.deployer.numRbDl 51
+param **.deployer.numRbUl 48
+param **.numBands 48
+param **.fbDelay 1
+
+vector 0 World.node[0].lteNic.phy servingCell:vector ETV
+attr source servingCell
+attr title "ID of the serving eNodeB for the UE, vector"
+attr unit ""
+vector 1 World.node[0].lteNic.mac macNodeID:vector ETV
+attr source macNodeID
+attr title "Reports Mac NodeID to allow for trans to nodeID, vector"
+vector 2 World.node[1].lteNic.phy servingCell:vector ETV
+attr source servingCell
+attr title "ID of the serving eNodeB for the UE, vector"
+attr unit ""
+vector 3 World.node[1].lteNic.mac macNodeID:vector ETV
+attr source macNodeID
+attr title "Reports Mac NodeID to allow for trans to nodeID, vector"
+vector 4 World.node[0].lteNic.phy posX:vector ETV
+attr source posX
+attr title "X position of node (at reception time), vector"
+vector 5 World.node[0].lteNic.phy posY:vector ETV
+attr source posY
+attr title "Y position of node (at reception time), vector"
+vector 6 World.node[1].lteNic.phy posX:vector ETV
+attr source posX
+attr title "X position of node (at reception time), vector"
+vector 7 World.node[1].lteNic.phy posY:vector ETV
+attr source posY
+attr title "Y position of node (at reception time), vector"
+vector 8 World.node[0].middleware.CP cpmContainedCnt:vector ETV
+attr source cpmContainedCnt
+attr title "cpmContainedCnt, vector"
+vector 9 World.node[0].middleware.CP cpmContainedAllCnt:vector ETV
+attr source cpmContainedAllCnt
+attr title "cpmContainedAllCnt, vector"
+vector 10 World.node[0].middleware.CP cpmContainedEtsiCnt:vector ETV
+attr source cpmContainedEtsiCnt
+attr title "cpmContainedEtsiCnt, vector"
+vector 11 World.node[0].middleware.CP cpmGenerationTime:vector ETV
+attr source cpmGenerationTime
+attr title "cpmGenerationTime, vector"
+vector 12 World.node[0].middleware.CP cpmSourceId:vector ETV
+attr source cpmSourceId
+attr title "cpmSourceId, vector"
+vector 13 World.node[0].lteNic.pdcpRrc receivedPacketFromUpperLayer:vector(packetBytes) ETV
+attr interpolationmode none
+attr source receivedPacketFromUpperLayer
+vector 14 World.node[0].lteNic.pdcpRrc sentPacketToLowerLayer:vector(packetBytes) ETV
+attr interpolationmode none
+attr source sentPacketToLowerLayer
+vector 15 World.node[0].lteNic.mac resourceReselectionCounter:vector ETV
+attr source resourceReselectionCounter
+attr title "ResourceReselectionCounter selectedNumber of transmissions, vector"
+vector 16 World.node[0].lteNic.mac sentPacketToLowerLayer:vector(packetBytes) ETV
+attr interpolationmode none
+attr source sentPacketToLowerLayer
+vector 17 World.node[0].lteNic.mac grantRequests:vector ETV
+attr source grantRequests
+attr title "Total number of requested grants, vector"
+vector 18 World.node[0].lteNic.mac receivedPacketFromUpperLayer:vector(packetBytes) ETV
+attr interpolationmode none
+attr source receivedPacketFromUpperLayer
+vector 19 World.node[0].lteNic.mac receivedPacketFromLowerLayer:vector(packetBytes) ETV
+attr interpolationmode none
+attr source receivedPacketFromLowerLayer
+vector 20 World.node[0].lteNic.mac grantStartTime:vector ETV
+attr source grantStartTime
+attr title "Grant StartTime, vector"
+vector 21 World.node[0].lteNic.mac selectedSubchannelIndex:vector ETV
+attr source selectedSubchannelIndex
+attr title "SelectedSubchannelIndex, vector"
+vector 22 World.node[0].lteNic.mac selectedNumSubchannels:vector ETV
+attr source selectedNumSubchannels
+attr title "SelectedNumSubchannels, vector"
+vector 23 World.node[0].lteNic.mac takingReservedGrant:vector ETV
+attr source takingReservedGrant
+attr title "takingReservedGrant, vector"
+vector 24 World.node[1].middleware.CP cpmContainedCnt:vector ETV
+attr source cpmContainedCnt
+attr title "cpmContainedCnt, vector"
+vector 25 World.node[1].middleware.CP cpmContainedAllCnt:vector ETV
+attr source cpmContainedAllCnt
+attr title "cpmContainedAllCnt, vector"
+vector 26 World.node[1].middleware.CP cpmContainedEtsiCnt:vector ETV
+attr source cpmContainedEtsiCnt
+attr title "cpmContainedEtsiCnt, vector"
+vector 27 World.node[1].middleware.CP cpmGenerationTime:vector ETV
+attr source cpm

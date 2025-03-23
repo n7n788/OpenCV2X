@@ -1,0 +1,294 @@
+file 2317240 1733562413                                         
+version 2
+run Base-0-20241207-18:06:43-22086
+attr configname Base
+attr datetime 20241207-18:06:43
+attr experiment Base
+attr inifile omnetpp.ini
+attr iterationvars ""
+attr iterationvarsf ""
+attr measurement ""
+attr network artery.envmod.World
+attr processid 22086
+attr repetition 0
+attr replication #0
+attr resultdir results
+attr runnumber 0
+attr seedset 0
+param *.traci.launcher.sumocfg "\"myroad/threeLane.sumocfg.xml\""
+param *.traci.launcher.sumo "\"sumo-gui\""
+param **.lteNic.phy.channelModel "xmldoc(\"config_channel.xml\")"
+param **.feedbackComputation "xmldoc(\"config_channel.xml\")"
+param *.node[*].d2dCapable true
+param *.node[*].mode4D2D true
+param **.amcMode "\"D2D\""
+param *.node[*].nicType "\"LteNicVUeMode4\""
+param *.node[*].lteNic.d2dCapable true
+param *.node[*].lteNic.pdcpRrc.ipBased false
+param *.node[*].lteNic.rlc.ipBased false
+param *.node[*].lteNic.mac.subchannelSize 25
+param *.node[*].lteNic.mac.numSubchannels 2
+param *.node[*].lteNic.mac.probResourceKeep 0.4
+param *.node[*].lteNic.mac.useCBR false
+param *.node[*].lteNic.mac.crLimit false
+param *.node[*].lteNic.mac.rriLookup false
+param *.node[*].lteNic.mac.dccMechanism false
+param *.node[*].lteNic.mac.packetDropping false
+param *.node[*].lteNic.mac.reselectAfter 1
+param *.node[*].lteNic.mac.adjacencyPSCCHPSSCH true
+param *.node[*].lteNic.rlc.um.scenario3gpp false
+param *.node[*].lteNic.phy.subchannelSize 25
+param *.node[*].lteNic.phy.numSubchannels 2
+param *.node[*].lteNic.phy.selectionWindowStartingSubframe 1
+param *.node[*].lteNic.phy.adjacencyPSCCHPSSCH true
+param *.node[*].lteNic.phy.pStep 100
+param *.node[*].lteNic.phy.thresholdRSSI 11
+param *.node[*].ueTxPower 23
+param *.node[*].lteNic.phy.d2dTxPower 23
+param **.usePreconfiguredTxParams true
+param *.node[*].application.typename "\"artery.lte.Mode4Application\""
+param *.node[*].application.middleware.updateInterval 0.1s
+param *.node[*].application.middleware.datetime "\"2013-06-01 12:35:00\""
+param *.node[*].application.middleware.services "xmldoc(\"services.xml\")"
+param **.lteNic.mac.txConfig "xmldoc(\"sidelink_configuration.xml\")"
+param *.node[*].middleware.updateInterval 0.1s
+param *.node[*].middleware.datetime "\"2018-01-17 13:44:00\""
+param *.node[*].middleware.services "xmldoc(\"services.xml\")"
+param *.node[*].middleware.CaService.withDccRestriction false
+param *.node[*].middleware.CP.withDccRestriction false
+param *.node[*].vanetza.dcc.TransmitRateControl "\"NoTransmitRateControl\""
+param *.node[*].middleware.CaService.fixedRate false
+param *.node[*].middleware.CaService.minInterval 0.1s
+param *.node[*].middleware.CaService.maxInterval 1.0s
+param *.node[*].middleware.CP.dccProfile 3
+param *.node[*].environmentModel.sensors "xmldoc(\"sensors.xml\")"
+param *.node[*].middleware.CP.lowerPosX 750
+param *.node[*].middleware.CP.upperPosX 1250
+param *.node[*].middleware.CP.lowerPosY 750
+param *.node[*].middleware.CP.upperPosY 1250
+param *.node[*].lteNic.phy.lowerPosX 750
+param *.node[*].lteNic.phy.upperPosX 1250
+param *.node[*].lteNic.phy.lowerPosY 750
+param *.node[*].lteNic.phy.upperPosY 1250
+param *.node[*].environmentModel.CircularRadar.fovRange 150m
+param *.node[*].environmentModel.CircularRadar.fovAngle 359.9
+param *.node[*].environmentModel.CircularRadar.numSegments 10
+param **.identityRegistryModule "\"idRegistry\""
+param *.traci.mapper.vehicleType "\"artery.envmod.Car\""
+param *.environmentModel.obstacleTypes "\"building shop\""
+param *.environmentModel.traciModule "\"traci\""
+param *.environmentModel.nodeMobilityModule "\".mobility\""
+param *.logLevel INFO
+param **.coreDebug true
+param **.routingRecorder.enabled false
+param *.playgroundSizeX 20000m
+param *.playgroundSizeY 20000m
+param *.playgroundSizeZ 50m
+param *.traci.core.version -1
+param *.traci.launcher.typename "\"PosixLauncher\""
+param *.traci.core.startTime 1s
+param **.deployer.positionUpdateInterval 0.001s
+param **.channelControl.pMax 10W
+param **.channelControl.alpha 1.0
+param **.channelControl.carrierFrequency 6000e+6Hz
+param **.rbAllocationType "\"localized\""
+param **.feedbackType "\"ALLBANDS\""
+param **.feedbackGeneratorType "\"IDEAL\""
+param **.maxHarqRtx 0
+param **.deployer.ruRange 50
+param **.deployer.ruTxPower "\"50,50,50;\""
+param **.deployer.antennaCws "\"2;\""
+param **.deployer.numRbDl 51
+param **.deployer.numRbUl 48
+param **.numBands 48
+param **.fbDelay 1
+
+vector 0 World.node[0].lteNic.phy servingCell:vector ETV
+attr source servingCell
+attr title "ID of the serving eNodeB for the UE, vector"
+attr unit ""
+vector 1 World.node[0].lteNic.mac macNodeID:vector ETV
+attr source macNodeID
+attr title "Reports Mac NodeID to allow for trans to nodeID, vector"
+vector 2 World.node[0].lteNic.phy posX:vector ETV
+attr source posX
+attr title "X position of node (at reception time), vector"
+vector 3 World.node[0].lteNic.phy posY:vector ETV
+attr source posY
+attr title "Y position of node (at reception time), vector"
+vector 4 World.node[0].lteNic.pdcpRrc receivedPacketFromUpperLayer:vector(packetBytes) ETV
+attr interpolationmode none
+attr source receivedPacketFromUpperLayer
+vector 5 World.node[0].lteNic.pdcpRrc sentPacketToLowerLayer:vector(packetBytes) ETV
+attr interpolationmode none
+attr source sentPacketToLowerLayer
+vector 6 World.node[0].lteNic.mac resourceReselectionCounter:vector ETV
+attr source resourceReselectionCounter
+attr title "ResourceReselectionCounter selectedNumber of transmissions, vector"
+vector 7 World.node[0].lteNic.mac sentPacketToLowerLayer:vector(packetBytes) ETV
+attr interpolationmode none
+attr source sentPacketToLowerLayer
+vector 8 World.node[0].lteNic.mac grantRequests:vector ETV
+attr source grantRequests
+attr title "Total number of requested grants, vector"
+vector 9 World.node[0].lteNic.mac receivedPacketFromUpperLayer:vector(packetBytes) ETV
+attr interpolationmode none
+attr source receivedPacketFromUpperLayer
+vector 10 World.node[0].lteNic.mac receivedPacketFromLowerLayer:vector(packetBytes) ETV
+attr interpolationmode none
+attr source receivedPacketFromLowerLayer
+vector 11 World.node[0].lteNic.mac grantStartTime:vector ETV
+attr source grantStartTime
+attr title "Grant StartTime, vector"
+vector 12 World.node[0].lteNic.mac selectedSubchannelIndex:vector ETV
+attr source selectedSubchannelIndex
+attr title "SelectedSubchannelIndex, vector"
+vector 13 World.node[0].lteNic.mac selectedNumSubchannels:vector ETV
+attr source selectedNumSubchannels
+attr title "SelectedNumSubchannels, vector"
+vector 14 World.node[0].lteNic.mac takingReservedGrant:vector ETV
+attr source takingReservedGrant
+attr title "takingReservedGrant, vector"
+vector 15 World.node[0].lteNic.mac sentPacketToUpperLayer:vector(packetBytes) ETV
+attr interpolationmode none
+attr source sentPacketToUpperLayer
+vector 16 World.node[0].lteNic.mac selectedMCS:vector ETV
+attr source selectedMCS
+attr title "MCS selected for transmission, vector"
+vector 17 World.node[0].lteNic.phy tbSent:vector ETV
+attr source tbSent
+attr title "Number of tb sent, vector"
+vector 18 World.node[0].lteNic.mac missedTransmission:vector ETV
+attr source missedTransmission
+attr title "Total Missed transmissions, vector"
+vector 19 World.node[0].lteNic.mac grantBreakMissedTrans:vector ETV
+attr source grantBreakMissedTrans
+attr title "Total grant breaks due to missed transmissions, vector"
+vector 20 World.node[0].lteNic.pdcpRrc sentPacketToUpperLayer:vector(packetBytes) ETV
+attr interpolationmode none
+attr source sentPacketToUpperLayer
+vector 21 World.node[1].lteNic.phy servingCell:vector ETV
+attr source servingCell
+attr title "ID of the serving eNodeB for the UE, vector"
+attr unit ""
+vector 22 World.node[1].lteNic.mac macNodeID:vector ETV
+attr source macNodeID
+attr title "Reports Mac NodeID to allow for trans to nodeID, vector"
+vector 23 World.node[1].lteNic.phy posX:vector ETV
+attr source posX
+attr title "X position of node (at reception time), vector"
+vector 24 World.node[1].lteNic.phy posY:vector ETV
+attr source posY
+attr title "Y position of node (at reception time), vector"
+vector 25 World.node[1].lteNic.mac receivedPacketFromLowerLayer:vector(packetBytes) ETV
+attr interpolationmode none
+attr source receivedPacketFromLowerLayer
+vector 26 World.node[1].lteNic.mac macDelayD2D:vector ETV
+attr source macDelayD2D
+attr title "Delay at the MAC layer D2D, vector"
+attr unit s
+vector 27 World.node[1].lteNic.mac sentPacketToUpperLayer:vector(packetBytes) ETV
+attr interpolationmode none
+attr source sentPacketToUpperLayer
+vector 28 World.node[1].lteNic.pdcpRrc receivedPacketFromLowerLayer:vector(packetBytes) ETV
+attr interpolationmode none
+attr source receivedPacketFromLowerLayer
+vector 29 World.node[1].lteNic.pdcpRrc sentPacketToUpperLayer:vector(packetBytes) ETV
+attr interpolationmode none
+attr source sentPacketToUpperLayer
+vector 30 World.node[1].lteNic.pdcpRrc receivedPacketFromUpperLayer:vector(packetBytes) ETV
+attr interpolationmode none
+attr source receivedPacketFromUpperLayer
+vector 31 World.node[1].lteNic.pdcpRrc sentPacketToLowerLayer:vector(packetBytes) ETV
+attr interpolationmode none
+attr source sentPacketToLowerLayer
+vector 32 World.node[1].lteNic.mac resourceReselectionCounter:vector ETV
+attr source resourceReselectionCounter
+attr title "ResourceReselectionCounter selectedNumber of transmissions, vector"
+vector 33 World.node[1].lteNic.mac sentPacketToLowerLayer:vector(packetBytes) ETV
+attr interpolationmode none
+attr source sentPacketToLowerLayer
+vector 34 World.node[1].lteNic.mac grantRequests:vector ETV
+attr source grantRequests
+attr title "Total number of requested grants, vector"
+vector 35 World.node[1].lteNic.mac receivedPacketFromUpperLayer:vector(packetBytes) ETV
+attr interpolationmode none
+attr source receivedPacketFromUpperLayer
+vector 36 World.node[1].lteNic.mac grantStartTime:vector ETV
+attr source grantStartTime
+attr title "Grant StartTime, vector"
+vector 37 World.node[1].lteNic.mac selectedSubchannelIndex:vector ETV
+attr source selectedSubchannelIndex
+attr title "SelectedSubchannelIndex, vector"
+vector 38 World.node[1].lteNic.mac selectedNumSubchannels:vector ETV
+attr source selectedNumSubchannels
+attr title "SelectedNumSubchannels, vector"
+vector 39 World.node[1].lteNic.mac takingReservedGrant:vector ETV
+attr source takingReservedGrant
+attr title "takingReservedGrant, vector"
+vector 40 World.node[1].lteNic.mac selectedMCS:vector ETV
+attr source selectedMCS
+attr title "MCS selected for transmission, vector"
+vector 41 World.node[1].lteNic.phy tbSent:vector ETV
+attr source tbSent
+attr title "Number of tb sent, vector"
+vector 42 World.node[0].lteNic.mac macDelayD2D:vector ETV
+attr source macDelayD2D
+attr title "Delay at the MAC layer D2D, vector"
+attr unit s
+vector 43 World.node[0].lteNic.pdcpRrc receivedPacketFromLowerLayer:vector(packetBytes) ETV
+attr interpolationmode none
+attr source receivedPacketFromLowerLayer
+vector 44 World.node[1].lteNic.mac missedTransmission:vector ETV
+attr source missedTransmission
+attr title "Total Missed transmissions, vector"
+vector 45 World.node[1].lteNic.mac grantBreakMissedTrans:vector ETV
+attr source grantBreakMissedTrans
+attr title "Total grant breaks due to missed transmissions, vector"
+5	11078 6129 300 97170 1.14760839825 24.24760839825 232 145 145 33640 4877800
+20	17207 7571 1194 97391 1.556 24.29 411 0 144 26352 3794688
+43	24778 3590 9947 97391 5.3 24.29 183 145 145 26535 3847575
+4	28368 6129 300 97170 1.14760839825 24.24760839825 232 144 144 33408 4810752
+3	34497 379643 3 97427 1.001 24.299 23299 8 8 186392 1491136
+2	414140 703129 3 97427 1.001 24.299 23299 6.3456307380169 403.40217021208 4181225.5935546 1109655657.8624
+17	1117269 4022 374 97348 1.178 24.285 232 1 1 232 232
+0	1121291 8 1 1 1 1 1 0 0 0 0
+1	1121299 11 1 1 1 1 1 1025 1025 1025 1050625
+6	1121310 5897 303 97173 1.14760839825 24.24760839825 232 10 30 4688 103368
+8	1127207 5665 303 97173 1.14760839825 24.24760839825 232 1 1 232 232
+12	1132872 5897 305 97175 1.14760839825 24.24760839825 232 0 1 118 118
+13	1138769 5897 305 97175 1.14760839825 24.24760839825 232 1 1 232 232
+16	1144666 4022 372 97346 1.178 24.285 232 5 5 1160 5800
+18	1148688 4004 476 96986 1.228 24.203 231 1 1 231 231
+19	1152692 4004 476 96986 1.228 24.203 231 1 1 231 231
+14	1156696 5897 305 97175 1.14760839825 24.24760839825 232 0 0 0 0
+11	1162593 6948 305 97175 1.14760839825 24.24760839825 232 1.178 24.285 2951.379 47948.461527
+42	1169541 3956 9944 97388 5.3 24.29 183 0.002 0.002 0.366 0.000732
+7	1173497 13709 303 97346 1.14760839825 24.285 696 0 149 34568 5150632
+15	1187206 11593 367 97388 1.178 24.29 643 0 147 26901 3954447
+10	1198799 13470 305 97384 1.14760839825 24.289 643 0 149 27267 4062783
+9	1212269 10383 303 97345 1.14760839825 24.285 464 145 147 67744 9891088
+31	1222652 5693 9758 98893 5.260504301917 24.960504301917 198 145 145 28710 4162950
+29	1228345 7085 9478 98789 5.197 24.911 379 0 144 26640 3836160
+28	1235430 3637 9478 97362 5.197 24.287 185 145 145 26825 3889625
+30	1239067 5693 9758 98893 5.260504301917 24.960504301917 198 144 144 28512 4105728
+24	1244760 350859 9064 98985 5.101 25 19900 8 8 159200 1273600
+23	1595619 625571 9064 98985 5.101 25 19900 5.1 318.73681343746 2616680.9880723 539539974.77448
+41	2221190 3487 9931 98923 5.298 24.969 198 1 1 198 198
+21	2224677 14 9060 9060 5.1 5.1 1 0 0 0 0
+22	2224691 17 9060 9060 5.1 5.1 1 1026 1026 1026 1052676
+32	2224708 5495 9761 98896 5.260504301917 24.960504301917 198 10 30 3892 84796
+34	2230203 5297 9761 98896 5.260504301917 24.960504301917 198 1 1 198 198
+37	2235500 5297 9763 98898 5.260504301917 24.960504301917 198 0 1 95 95
+38	2240797 5297 9763 98898 5.260504301917 24.960504301917 198 1 1 198 198
+40	2246094 3487 9929 98921 5.298 24.969 198 5 5 990 4950
+44	2249581 3477 10151 98834 5.348 24.932 197 1 1 197 197
+45	2253058 3477 10151 98834 5.348 24.932 197 1 1 197 197
+39	2256535 5297 9763 98898 5.260504301917 24.960504301917 198 0 0 0 0
+36	2261832 6209 9763 98898 5.260504301917 24.960504301917 198 5.298 24.969 2996.607 51819.723207
+26	2268041 4007 9475 97359 5.197 24.287 185 0.002 0.002 0.37 0.00074
+33	2272048 12667 9761 98921 5.260504301917 24.969 594 0 149 29502 4395798
+27	2284715 10572 9475 98916 5.197 24.969 577 0 147 27195 3997665
+25	2295287 12376 9472 98898 5.196 24.960504301917 577 0 149 27565 4107185
+35	2307663 9576 9761 98920 5.260504301917 24.969 396 145 147 57816 8441532
+

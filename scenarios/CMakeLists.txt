@@ -55,6 +55,9 @@ if(TARGET lte)
     add_opp_run(simulte-manhattan
             DEPENDENCY artery-lte
             WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/manhattan)
+    add_opp_run(simulte-highway-merge
+            DEPENDENCY artery-lte
+            WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/highway-merge)
 endif()
 
 if(TARGET lte AND WITH_STORYBOARD)

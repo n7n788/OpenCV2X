@@ -1,8 +1,8 @@
 # OpenCV2X
 
-OpenCV2X enables simulation of V2X scenarios based on the 3GPP CV2X Mode 4 standard through an extension of the SimuLTE framework.
-It also allows for simulation with the ETSI ITS-G5 standard application layers through an integration with Artery which implements
-these standards for OMNeT++. 
+研究で使用している車両間通信シミュレータです。既存のシミュレータとの差分は以下の通りです
 
-More information can be found in the documentation page [here](http://www.cs.ucc.ie/~bm18/cv2x)
-# OpenCV2X
+- CPS (Collective Perception Service) を実装
+- 評価指標 (パケット到着率、物体認識確率、AoI) を取得できるように変更
+- 取得結果を分析・グラフ描画するためにPythonコードを追加
+- MCS (Maneuver Coordination Service) を実装 (途中)

@@ -1,0 +1,11 @@
+ 
+<routes xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://sumo.dlr.de/xsd/routes_file.xsd">
+    <vType id="CAV_0" accel="3.0" decel="5.0" maxSpeed="20.0" length="5"/>
+	<vType id="CAV_1" accel="3.0" decel="5.0" maxSpeed="20.0" length="5"/>
+
+    <route id="main" edges="main"/>
+
+	<flow id="0" begin="0" end="10" number="2" route="main" type="CAV_0" departLane="0"/>
+	<flow id="1" begin="0" end="10" number="2" route="main" type="CAV_1" departLane="1"/>
+</routes>
+

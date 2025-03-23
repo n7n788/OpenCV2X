@@ -239,17 +239,6 @@ void CollectivePerceptionMockService::trigger()
         }
     }
 
-    // aoiを計算して、シグナルを送信
-    // double offset = 0.8, thretholdD = 20.0, min_a = 4.5;
-    // double max_collisionT = 10.0, offset = 10.0, alpha = 0.25, thresholdD = 20.0;
-    
-    // auto getThresholdD = [&](double collisionT, double v) -> double {
-    //     // double dist = std::min(max_a * collisionT * collisionT / 2.0, max_thresholdD);
-    //     double dist = alpha * v * collisionT  + offset;
-    //     // if (mTraciId == "0.0") std::cout << "thresholdD = " << dist << " m\n";
-    //     return dist;
-    // };
-    
     // 2023-12-18 パラメータ
     double max_v = 16.67, max_a = 3.81, min_a = 8.35, w = 0.437, length = 5.0, width = 1.8;
     int max_t = 40; // 100ms単位
@@ -421,8 +410,6 @@ void CollectivePerceptionMockService::trigger()
                         // 対処できない場合
                         return -10.0;
                     };
-
-                    // if (mTraciId == "13.18" && targetId == "103.3") std::cout << calculateRow(false) << ", " << calculateRow(true) << "\n";
                     emit(riskRowSignal, calculateRow(false));
                     emit(trueRiskRowSignal, calculateRow(true));
                     int h = std::hash<std::string>()(targetId);
@@ -450,28 +437,6 @@ void CollectivePerceptionMockService::indicate(const vanetza::btp::DataIndicatio
 // CPMを生成するメソッド
 void CollectivePerceptionMockService::generatePacket()
 {
-    // AoIと物体認識確率をシグナルで送信
-    //  for (auto object: mEnvironmentModel->allObjects()) {
-    //     // そのオブジェクトがまだシミュレーション上に存在するかチェック
-    //     std::shared_ptr<EnvironmentModelObject> obj = object.first.lock();
-    //     if (obj) {
-    //         auto identity = mIdentityRegistry->lookup<IdentityRegistry::traci>(obj->getExternalId());
-    //         if (identity) {
-    //             // オブジェクトとの距離をシグナルで送信
-    //             auto dist = round(distance(mVehicleDataProvider->position(), obj->getVehicleData().position()), vanetza::units::si::meter);
-    //             emit(perceptedObjectDistanceSignal, dist);
-
-    //             // 各センサについて、最も最近に物体を認識したセンサをもとに、AoIを計算
-    //             auto tracking = object.second;
-    //             omnetpp::SimTime latest{0, SIMTIME_MS};
-    //             for (auto sensor: tracking.sensors()) {
-    //                 latest = std::max(latest, sensor.second.last());
-    //             }
-    //             omnetpp::SimTime aoi = simTime() - latest;
-    //             emit(aoiSignal, aoi);
-    //         }
-    //     }
-    // }
 
     // BTP層へ送るリクエストを生成
     using namespace vanetza;
@@ -700,12 +665,6 @@ void CollectivePerceptionMockService::generatePacket()
 
                                     double r = calculateRow(false);
                                     maxAbsRisk = std::max(maxAbsRisk, std::abs(r));
-                                    // if (r >= 0) maxAbsRisk = std::max(maxAbsRisk, r);
-                                    // else maxAbsRisk = std::min(maxAbsRisk, r); 
-
-                                    // if (mTraciId == "5.6" && targetId == "103.0") {
-                                    //     std::cout << rcvId << ": " << r << "\n";
-                                    // }
                                 }
                             }
                         }
@@ -739,48 +698,12 @@ void CollectivePerceptionMockService::generatePacket()
                     !checkHeadingDelta(obj)) continue;
                     else {
                         sentAllowedObjects.push_back(targetId);
-                        // std::cout << "etsi\n";
-                        // if (mTraciId == "136.0")  {
-                        //     std::cout << targetId << ": " << obj->getVehicleData().position().x.value() << "m, " << obj->getVehicleData().position().y.value() << "m, " <<  
-                        //     obj->getVehicleData().speed().value() << "cm/s, " << obj->getVehicleData().heading().value() << "deci°" << "\n";
-                        // }
                     }
                 }
-                // }
-
-                // if (mTraciId == "32.0" && targetId == "0.0") {
-                //     std::cout << omnetpp::simTime() << "s :" << obj->getVehicleData().position().x.value() << "m, " << obj->getVehicleData().position().y.value() << "m, " <<  
-                //     obj->getVehicleData().speed().value() << "cm/s, " << obj->getVehicleData().heading().value() << "deci°" << "\n";
-                // }
-
-                // CollectivePerceptionMockMessage::ObjectContainer objectContainer;
-                // objectContainer.object = object.first;
-                // objectContainer.objectId = tracking.traci();
-                // objectContainer.sensorId = sensor.first->getId();
-                // objectContainer.timeOfMeasurement = sensor.second.last();
-                // objectContainer.posX = obj->getVehicleData().position().x.value();
-                // objectContainer.posY = obj->getVehicleData().position().y.value();
-                // objectContainer.speed = obj->getVehicleData().speed().value();
-                // objectContainer.heading = obj->getVehicleData().heading().value();
-                // // if (mRiskMap.find(tracking.traci()) != mRiskMap.end()) objectContainer.risk = mRiskMap[tracking.traci()];
-                // // else objectContainer.risk = 0.0;
-                // // std::cout << objectContainer.risk << "\n";
-                // objectContainers.emplace_back(std::move(objectContainer));
-
-                // // if (tracking.traci() == "66.0") {
-                // //     std::cout << mTraciId << "send cpm\n";
-                // // }
-                // // 最後に送信したCPMの情報を更新
-                // if (mIntervalFlag) mLastSent[targetId] = omnetpp::simTime();
-                // else mLastCpm.update(obj);
 
                 break; // 同じオブジェクトを含めないようにブレーク
             }
         }
-        // if (objectContainers.size() >= 30) {
-        //     // std::cout << "Number of objects included in CPM >= 35\n";
-        //     break;
-        // }
     }
 
     // 以下で候補から、実際にCPMに含める物体を選択
@@ -794,21 +717,6 @@ void CollectivePerceptionMockService::generatePacket()
             if (sentObjects.size() >= mCpmContainedCnt) break;
         }
 
-        // 全ての物体を優先度の高い順に出力
-        // std::cout << mTraciId << "\n";
-        // for (int i = 0; i < proposedSentAllowedObjects.size(); i++) {
-        //     double priority = std::get<0>(proposedSentAllowedObjects.at(i));
-        //     // int k = std::get<1>(proposedSentAllowedObjects.at(i))
-        //     std::string id = std::get<2>(proposedSentAllowedObjects.at(i));
-        //     std::cout << id << ": sigma=" << priority << "\n";
-        // }
-
-        // //　実際にCPMに含める物体のみを優先度と共に出力
-        // std::cout << mTraciId << " select in CPM: ";
-        // for (auto id: sentObjects) {
-        //     std::cout << id << "  ";
-        // }
-        // std::cout << "\n";
     } else if (mProposedFlag) {
         std::stable_sort(proposedSentAllowedObjects.begin(), proposedSentAllowedObjects.end(), std::greater<std::tuple<double, int, std::string>>());
         // 昇順に見て、cpmの送信車両数が0ならCPMに載せる
@@ -1046,7 +954,7 @@ void CollectivePerceptionMockService::Data::update(std::shared_ptr<EnvironmentMo
         mTime = omnetpp::simTime();
         mPosition = obj->getVehicleData().position();
         mSpeed = obj->getVehicleData().speed();
-        mHeading = obj->getVehicleData().heading();
+     mHeading = obj->getVehicleData().heading();
     }
 }
 
