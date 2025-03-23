@@ -237,6 +237,8 @@ ManeuverCoordinationMessage* ManeuverCoordinationService::generate()
     // 可視化を更新
     if (mEnableVisualization) {
         MCMWebVisualizer::getInstance().setEgoPaths(mTraciId, plannedPath, desiredPath);
+        // 候補経路も可視化に渡す
+        MCMWebVisualizer::getInstance().setPathCandidates(mTraciId, pathCandidates);
     }
     
     return mcm;

@@ -25,6 +25,9 @@ public:
     // 自車の最新パスを設定
     void setEgoPaths(const std::string& vehicleId, const FrenetPath& plannedPath, const FrenetPath& desiredPath);
     
+    // 候補経路を設定
+    void setPathCandidates(const std::string& vehicleId, const std::vector<FrenetPath>& candidates);
+    
     // クリーンアップ
     void close();
 
@@ -34,7 +37,9 @@ private:
     
     // JSONに変換するヘルパー関数
     std::string pathToJson(const FrenetPath& path);
+    std::string pathsArrayToJson(const std::vector<FrenetPath>& paths);
     std::string createJsonUpdate();
+    void updateJsonFile();
     
     // WebSocketコネクション
     std::unique_ptr<artery::AsioTask> mWebSocketTask;
@@ -44,6 +49,7 @@ private:
     struct VehiclePathData {
         FrenetPath plannedPath;
         FrenetPath desiredPath;
+        std::vector<FrenetPath> pathCandidates;
         double latPos;
         double lonPos;
         double latSpeed;

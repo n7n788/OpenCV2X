@@ -78,19 +78,17 @@ void MCMWebVisualizer::setEgoPaths(const std::string& vehicleId, const FrenetPat
     data.lastUpdateTime = omnetpp::simTime().dbl();
     
     // JSONデータをファイルに書き込む
-    try {
-        std::string jsonUpdate = createJsonUpdate();
-        std::ofstream dataFile;
-        dataFile.open("mcm_visualization/data.json");
-        if (!dataFile.is_open()) {
-            std::cerr << "MCMWebVisualizer: Could not open data.json for writing" << std::endl;
-            return;
-        }
-        dataFile << jsonUpdate;
-        dataFile.close();
-    } catch (const std::exception& e) {
-        std::cerr << "MCMWebVisualizer: Error writing data file: " << e.what() << std::endl;
-    }
+    updateJsonFile();
+}
+
+void MCMWebVisualizer::setPathCandidates(const std::string& vehicleId, const std::vector<FrenetPath>& candidates) {
+    // 候補経路を更新
+    VehiclePathData& data = mVehicleData[vehicleId];
+    data.pathCandidates = candidates;
+    data.lastUpdateTime = omnetpp::simTime().dbl();
+    
+    // JSONデータをファイルに書き込む
+    updateJsonFile();
 }
 
 void MCMWebVisualizer::close() {
@@ -120,6 +118,19 @@ std::string MCMWebVisualizer::pathToJson(const FrenetPath& path) {
     return json.str();
 }
 
+std::string MCMWebVisualizer::pathsArrayToJson(const std::vector<FrenetPath>& paths) {
+    std::ostringstream json;
+    json << "[";
+    
+    for (size_t p = 0; p < paths.size(); ++p) {
+        json << pathToJson(paths[p]);
+        if (p < paths.size() - 1) json << ",";
+    }
+    
+    json << "]";
+    return json.str();
+}
+
 std::string MCMWebVisualizer::createJsonUpdate() {
     std::ostringstream json;
     json << "{";
@@ -139,7 +150,8 @@ std::string MCMWebVisualizer::createJsonUpdate() {
         json << "\"position\":{\"x\":" << data.latPos << ",\"y\":" << data.lonPos << "},";
         json << "\"speed\":" << data.latSpeed << ",";
         json << "\"plannedPath\":" << pathToJson(data.plannedPath) << ",";
-        json << "\"desiredPath\":" << pathToJson(data.desiredPath);
+        json << "\"desiredPath\":" << pathToJson(data.desiredPath) << ",";
+        json << "\"pathCandidates\":" << pathsArrayToJson(data.pathCandidates);
         json << "}";
     }
     
@@ -147,4 +159,20 @@ std::string MCMWebVisualizer::createJsonUpdate() {
     return json.str();
 }
 
+// 既存のsetEgoPathsやsetPathCandidatesメソッドからJSONデータ更新処理を分離
+void MCMWebVisualizer::updateJsonFile() {
+    try {
+        std::string jsonUpdate = createJsonUpdate();
+        std::ofstream dataFile;
+        dataFile.open("mcm_visualization/data.json");
+        if (!dataFile.is_open()) {
+            std::cerr << "MCMWebVisualizer: Could not open data.json for writing" << std::endl;
+            return;
+        }
+        dataFile << jsonUpdate;
+        dataFile.close();
+    } catch (const std::exception& e) {
+        std::cerr << "MCMWebVisualizer: Error writing data file: " << e.what() << std::endl;
+    }
+}
 } // namespace artery

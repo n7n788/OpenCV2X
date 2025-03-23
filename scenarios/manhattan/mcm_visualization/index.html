@@ -39,6 +39,9 @@
         .desired-segment {
             background-color: rgba(255, 60, 60, 0.9);
         }
+        .candidate-segment {
+            background-color: rgba(40, 180, 40, 0.5);
+        }
         .path-point {
             position: absolute;
             width: 4px;
@@ -52,6 +55,9 @@
         }
         .desired-point {
             background-color: rgba(255, 60, 60, 0.9);
+        }
+        .candidate-point {
+            background-color: rgba(40, 180, 40, 0.5);
         }
         .road { 
             position: absolute; 
@@ -124,6 +130,13 @@
             white-space: nowrap;
             z-index: 9;
         }
+        .toggle-switch {
+            padding: 5px;
+            margin-bottom: 5px;
+        }
+        .toggle-switch input {
+            margin-right: 5px;
+        }
     </style>
 </head>
 <body>
@@ -132,6 +145,17 @@
         <div style="margin-bottom: 5px;">
             <label>スケール: <input type="range" id="scale" min="0.1" max="10" value="2" step="0.1"></label>
         </div>
+        
+        <div class="toggle-switch">
+            <label><input type="checkbox" id="show-planned" checked> 予定経路</label>
+        </div>
+        <div class="toggle-switch">
+            <label><input type="checkbox" id="show-desired" checked> 希望経路</label>
+        </div>
+        <div class="toggle-switch">
+            <label><input type="checkbox" id="show-candidates" checked> 候補経路</label>
+        </div>
+        
         <div>
             <div class="legend-item">
                 <span class="legend-color" style="background-color: #2ca02c;"></span> 車両
@@ -141,6 +165,9 @@
             </div>
             <div class="legend-item">
                 <span class="legend-color" style="background-color: rgba(255, 60, 60, 0.9);"></span> 希望経路
+            </div>
+            <div class="legend-item">
+                <span class="legend-color" style="background-color: rgba(40, 180, 40, 0.5);"></span> 候補経路
             </div>
         </div>
         <div style="margin-top: 5px;">
@@ -157,6 +184,10 @@
         const debugInfo = document.getElementById('debug-info');
         const toggleDebug = document.getElementById('toggle-debug');
         const togglePositions = document.getElementById('toggle-positions');
+        const showPlanned = document.getElementById('show-planned');
+        const showDesired = document.getElementById('show-desired');
+        const showCandidates = document.getElementById('show-candidates');
+        
         const vehicles = {};
         const positionInfos = {};
         const SCALE_FACTOR = 1; // メートルをピクセルに変換
@@ -173,6 +204,28 @@
             const infos = document.querySelectorAll('.position-info');
             infos.forEach(info => {
                 info.style.display = showPositions ? 'block' : 'none';
+            });
+        });
+        
+        // 経路表示切り替えイベントリスナー
+        showPlanned.addEventListener('change', function() {
+            const elements = document.querySelectorAll('.planned-segment, .planned-point');
+            elements.forEach(el => {
+                el.style.display = this.checked ? 'block' : 'none';
+            });
+        });
+        
+        showDesired.addEventListener('change', function() {
+            const elements = document.querySelectorAll('.desired-segment, .desired-point');
+            elements.forEach(el => {
+                el.style.display = this.checked ? 'block' : 'none';
+            });
+        });
+        
+        showCandidates.addEventListener('change', function() {
+            const elements = document.querySelectorAll('.candidate-segment, .candidate-point');
+            elements.forEach(el => {
+                el.style.display = this.checked ? 'block' : 'none';
             });
         });
         
@@ -344,6 +397,16 @@
                 if (vehicleData.desiredPath && vehicleData.desiredPath.length > 0) {
                     drawPathWithPoints(vehicleData.desiredPath, scaleValue, viewInfo, 'desired', 3);
                 }
+                
+                // 候補経路を描画
+                if (vehicleData.pathCandidates && vehicleData.pathCandidates.length > 0) {
+                    vehicleDebug += `  候補経路数: ${vehicleData.pathCandidates.length}<br>`;
+                    
+                    // 各候補経路を描画
+                    for (let i = 0; i < vehicleData.pathCandidates.length; i++) {
+                        drawPathWithPoints(vehicleData.pathCandidates[i], scaleValue, viewInfo, 'candidate', 5);
+                    }
+                }
             }
             
             // デバッグ情報を更新
@@ -353,11 +416,30 @@
             } else {
                 debugInfo.innerHTML += vehicleDebug;
             }
+            
+            // 経路表示の表示/非表示を適用
+            if (!showPlanned.checked) {
+                document.querySelectorAll('.planned-segment, .planned-point').forEach(el => {
+                    el.style.display = 'none';
+                });
+            }
+            
+            if (!showDesired.checked) {
+                document.querySelectorAll('.desired-segment, .desired-point').forEach(el => {
+                    el.style.display = 'none';
+                });
+            }
+            
+            if (!showCandidates.checked) {
+                document.querySelectorAll('.candidate-segment, .candidate-point').forEach(el => {
+                    el.style.display = 'none';
+                });
+            }
         }
         
         // 点と線を使って経路を描画する
         function drawPathWithPoints(pathData, scaleValue, viewInfo, pathType, interval) {
-            if (pathData.length < 2) return;
+            if (!pathData || pathData.length < 2) return;
             
             const points = [];
             
