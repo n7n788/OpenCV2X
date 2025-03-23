@@ -116,8 +116,6 @@ private:
     
     // 車両データプロバイダ
     const VehicleDataProvider* mVehicleDataProvider = nullptr;
-    // ローカル環境モデル
-    const LocalEnvironmentModel* mLocalEnvironmentModel = nullptr;
 };
 
 } // namespace artery

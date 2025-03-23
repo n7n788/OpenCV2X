@@ -26,8 +26,8 @@ public:
 	static constexpr double K_LON = 1.0; // 縦方向の重み
 
 	// getter 
-	const artery::Trajectory& getLatTrajectory() { return mLatTrajectory; }
-	const artery::Trajectory& getLonTrajectory() { return mLonTrajectory; }
+	const artery::Trajectory& getLatTrajectory() const { return mLatTrajectory; }
+	const artery::Trajectory& getLonTrajectory() const { return mLonTrajectory; }
 	double getCost() const { return mCost; }
 
 	// setter

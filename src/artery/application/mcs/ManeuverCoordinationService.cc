@@ -4,7 +4,6 @@
 #include "artery/application/mcs/FrenetPath.h"
 #include "artery/application/mcs/FrenetPlanning.h"
 #include "artery/application/VehicleDataProvider.h"
-#include "artery/application/LocalEnvironmentModel.h"
 #include "artery/utility/IdentityRegistry.h"
 #include "artery/utility/InitStages.h"
 #include "artery/traci/VehicleController.h"
@@ -60,15 +59,9 @@ void ManeuverCoordinationService::initialize(int stage)
         
         // 車両データプロバイダの取得
         mVehicleDataProvider = &getFacilities().get_const<VehicleDataProvider>();
-        
-        // ローカル環境モデルの取得
-        mLocalEnvironmentModel = &getFacilities().get_const<LocalEnvironmentModel>();
     }
     else if (stage == InitStages::Self) {
         mTraciId = getFacilities().get_const<Identity>().traci;
-        
-        // 定期的なトリガーのスケジュール
-        scheduleAt(omnetpp::simTime() + par("updateInterval").doubleValue(), mTrigger);
     }
 }
 
@@ -96,9 +89,8 @@ void ManeuverCoordinationService::trigger()
     // MCMの送信
     request(req, mcm);
     EV_INFO << "Vehicle " << mTraciId << " sent MCM at " << omnetpp::simTime() << "s\n";
-    
-    // 次のトリガーを設定
-    scheduleAt(omnetpp::simTime() + par("updateInterval").doubleValue(), mTrigger);
+
+    std::cout << "Vehicle " << mTraciId << " sent MCM at " << omnetpp::simTime() << "s\n";
 }
 
 ManeuverCoordinationMessage* ManeuverCoordinationService::generate()
@@ -240,6 +232,7 @@ void ManeuverCoordinationService::indicate(const vanetza::btp::DataIndication&, 
     const std::string& senderId = mcm->getTraciId();
     
     EV_INFO << "Vehicle " << mTraciId << " received MCM from " << senderId << " at " << omnetpp::simTime() << "s\n";
+    std::cout << "Vehicle " << mTraciId << " received MCM from " << senderId << " at " << omnetpp::simTime() << "s\n";
     
     // 受信した経路情報の保存
     mReceivedPlannedPaths[senderId] = mcm->getPlannedPath();
@@ -278,7 +271,7 @@ bool ManeuverCoordinationService::checkCollision(const FrenetPath& path1, const 
         return false;
     }
     
-    // 軌道の長さは同じであるべき
+    // 軌道の長さは同じであるiき
     size_t size = std::min({lat1.size(), lon1.size(), lat2.size(), lon2.size()});
     
     // 各時点で距離をチェック
