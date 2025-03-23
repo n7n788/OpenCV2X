@@ -1,53 +1,282 @@
-
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Frenet Path Visualizer</title>
+    <meta charset="UTF-8">
+    <title>Frenet Path Visualizer with Road</title>
     <style>
-        body { margin: 0; font-family: Arial, sans-serif; }
-        #visualizer { width: 100%; height: 100vh; }
-        .vehicle { position: absolute; width: 20px; height: 10px; border-radius: 3px; }
-        .path { position: absolute; height: 2px; border-radius: 1px; }
-        .planned-path { background-color: rgba(0, 100, 255, 0.7); }
-        .desired-path { background-color: rgba(255, 50, 50, 0.7); border-style: dashed; }
-        .controls { position: fixed; top: 10px; right: 10px; background: rgba(255,255,255,0.8); padding: 10px; }
+        body { margin: 0; font-family: Arial, sans-serif; overflow: hidden; background-color: #f5f5f5; }
+        #visualizer { width: 100%; height: 100vh; position: relative; }
+        .vehicle { 
+            position: absolute; 
+            width: 20px; 
+            height: 10px; 
+            border-radius: 3px; 
+            transform-origin: center; 
+            z-index: 10;
+        }
+        .path { 
+            position: absolute; 
+            height: 2px; 
+            z-index: 5; 
+            transform-origin: 0 0;
+            display: none; /* 非表示にして新しい方式に切り替え */
+        }
+        .planned-path { 
+            background-color: transparent;
+        }
+        .desired-path { 
+            background-color: transparent;
+        }
+        .path-segment {
+            position: absolute;
+            height: 2px;
+            z-index: 5;
+            transform-origin: 0 0;
+        }
+        .planned-segment {
+            background-color: rgba(0, 100, 255, 0.7);
+        }
+        .desired-segment {
+            background-color: rgba(255, 60, 60, 0.9);
+        }
+        .path-point {
+            position: absolute;
+            width: 4px;
+            height: 4px;
+            border-radius: 50%;
+            z-index: 6;
+            transform: translate(-50%, -50%);
+        }
+        .planned-point {
+            background-color: rgba(0, 100, 255, 0.7);
+        }
+        .desired-point {
+            background-color: rgba(255, 60, 60, 0.9);
+        }
+        .road { 
+            position: absolute; 
+            background-color: #333; 
+            z-index: 1; 
+        }
+        .lane-marking {
+            position: absolute;
+            background-color: white;
+            height: 1px;
+            z-index: 2;
+        }
+        .controls { 
+            position: fixed; 
+            top: 10px; 
+            right: 10px; 
+            background: rgba(255,255,255,0.9); 
+            padding: 10px; 
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            z-index: 100;
+            font-size: 14px;
+        }
+        .debug-info {
+            position: fixed;
+            bottom: 10px;
+            left: 10px;
+            background: rgba(255,255,255,0.9);
+            padding: 10px;
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            z-index: 100;
+            font-family: monospace;
+            max-width: 600px;
+            max-height: 300px;
+            overflow: auto;
+            font-size: 14px;
+            line-height: 1.4;
+        }
+        .legend-item {
+            display: inline-block;
+            margin-right: 10px;
+        }
+        .legend-color {
+            display: inline-block;
+            width: 15px;
+            height: 8px;
+            margin-right: 3px;
+            vertical-align: middle;
+        }
+        .vehicle-label {
+            font-size: 12px;
+            font-weight: bold;
+            position: absolute;
+            z-index: 20;
+            color: #fff;
+            background-color: rgba(0,0,0,0.7);
+            padding: 2px 4px;
+            border-radius: 3px;
+            text-align: center;
+            white-space: nowrap;
+        }
+        .position-info {
+            position: absolute;
+            font-size: 10px;
+            color: #333;
+            background-color: rgba(255,255,255,0.8);
+            padding: 1px 3px;
+            border-radius: 2px;
+            white-space: nowrap;
+            z-index: 9;
+        }
     </style>
 </head>
 <body>
     <div id="visualizer"></div>
     <div class="controls">
-        <label>スケール: <input type="range" id="scale" min="1" max="20" value="10"></label>
+        <div style="margin-bottom: 5px;">
+            <label>スケール: <input type="range" id="scale" min="0.1" max="10" value="2" step="0.1"></label>
+        </div>
         <div>
-            <span style="background-color: rgba(0, 100, 255, 0.7); display: inline-block; width: 20px; height: 10px;"></span> 予定経路
-            <span style="background-color: rgba(255, 50, 50, 0.7); display: inline-block; width: 20px; height: 10px; margin-left: 10px;"></span> 希望経路
+            <div class="legend-item">
+                <span class="legend-color" style="background-color: #2ca02c;"></span> 車両
+            </div>
+            <div class="legend-item">
+                <span class="legend-color" style="background-color: rgba(0, 100, 255, 0.7);"></span> 予定経路
+            </div>
+            <div class="legend-item">
+                <span class="legend-color" style="background-color: rgba(255, 60, 60, 0.9);"></span> 希望経路
+            </div>
+        </div>
+        <div style="margin-top: 5px;">
+            <button id="toggle-debug" style="font-size: 14px; padding: 3px 8px;">デバッグ情報</button>
+            <button id="toggle-positions" style="font-size: 14px; padding: 3px 8px;">位置情報表示</button>
         </div>
     </div>
+    
+    <div id="debug-info" class="debug-info" style="display: none;"></div>
     
     <script>
         const visualizer = document.getElementById('visualizer');
         const scale = document.getElementById('scale');
+        const debugInfo = document.getElementById('debug-info');
+        const toggleDebug = document.getElementById('toggle-debug');
+        const togglePositions = document.getElementById('toggle-positions');
         const vehicles = {};
-        const SCALE_FACTOR = 10; // メートルをピクセルに変換
+        const positionInfos = {};
+        const SCALE_FACTOR = 1; // メートルをピクセルに変換
+        let showPositions = false;
+        
+        // デバッグ情報表示切り替え
+        toggleDebug.addEventListener('click', function() {
+            debugInfo.style.display = debugInfo.style.display === 'none' ? 'block' : 'none';
+        });
+        
+        // 位置情報表示切り替え
+        togglePositions.addEventListener('click', function() {
+            showPositions = !showPositions;
+            const infos = document.querySelectorAll('.position-info');
+            infos.forEach(info => {
+                info.style.display = showPositions ? 'block' : 'none';
+            });
+        });
+        
+        // 道路情報の定義
+        const roadInfo = {
+            startX: -5.1,  // 道路の開始X座標 (メートル)
+            endX: 400,     // 道路の終了X座標 (メートル)
+            y: 0,          // 道路のY座標 (メートル)
+            width: 9.6,    // 道路の幅 (メートル)
+            lanes: 3       // レーン数
+        };
+        
+        // デバッグ情報を表示
+        function updateDebugInfo(message) {
+            debugInfo.innerHTML = message;
+        }
+        
+        // 道路と車線を描画
+        function drawRoad(scaleValue) {
+            // 既存の道路要素を削除
+            const existingRoads = document.querySelectorAll('.road, .lane-marking');
+            existingRoads.forEach(element => element.remove());
+            
+            // 道路の描画
+            const roadElement = document.createElement('div');
+            roadElement.className = 'road';
+            
+            const scaledStartX = roadInfo.startX * scaleValue * SCALE_FACTOR;
+            const scaledWidth = (roadInfo.endX - roadInfo.startX) * scaleValue * SCALE_FACTOR;
+            const scaledHeight = roadInfo.width * scaleValue * SCALE_FACTOR;
+            
+            // 道路の位置と大きさを設定 - 左上に配置（マージンは20px）
+            const roadLeft = 20;
+            const roadTop = 20;
+            
+            roadElement.style.left = `${roadLeft}px`;
+            roadElement.style.top = `${roadTop}px`;
+            roadElement.style.width = `${scaledWidth}px`;
+            roadElement.style.height = `${scaledHeight}px`;
+            
+            visualizer.appendChild(roadElement);
+            
+            // デバッグ情報更新
+            const debugMsg = `
+                <strong>道路情報:</strong><br>
+                スケール: ${scaleValue}<br>
+                道路左端: ${roadLeft}px<br>
+                道路上端: ${roadTop}px<br>
+                道路幅: ${scaledWidth}px<br>
+                道路高さ: ${scaledHeight}px<br>
+                道路範囲: ${roadInfo.startX}m～${roadInfo.endX}m<br>
+                道路幅: ${roadInfo.width}m<br>
+                レーン数: ${roadInfo.lanes}<br>
+            `;
+            updateDebugInfo(debugMsg);
+            
+            // 車線区切りを描画
+            const laneHeight = scaledHeight / roadInfo.lanes;
+            for (let i = 1; i < roadInfo.lanes; i++) {
+                const laneMarking = document.createElement('div');
+                laneMarking.className = 'lane-marking';
+                
+                laneMarking.style.left = `${roadLeft}px`;
+                laneMarking.style.top = `${roadTop + laneHeight * i}px`;
+                laneMarking.style.width = `${scaledWidth}px`;
+                
+                visualizer.appendChild(laneMarking);
+            }
+            
+            return {
+                roadLeft: roadLeft,
+                roadTop: roadTop,
+                roadWidth: scaledWidth,
+                roadHeight: scaledHeight,
+                laneHeight: laneHeight
+            };
+        }
         
         // JSONデータを定期的に取得
         function fetchData() {
             fetch('data.json?' + new Date().getTime())
                 .then(response => response.json())
                 .then(data => {
-                    updateVehicles(data);
+                    const scaleValue = parseFloat(scale.value);
+                    const viewInfo = drawRoad(scaleValue);
+                    updateVehicles(data, scaleValue, viewInfo);
                     setTimeout(fetchData, 500); // 500ミリ秒ごとに更新
                 })
                 .catch(err => {
                     console.error('Error fetching data:', err);
+                    debugInfo.innerHTML += `<br>Error: ${err.message}`;
                     setTimeout(fetchData, 1000); // エラー時は1秒後に再試行
                 });
         }
         
-        function updateVehicles(data) {
-            const scaleValue = parseInt(scale.value);
+        function updateVehicles(data, scaleValue, viewInfo) {
+            let vehicleDebug = '<strong>車両情報:</strong><br>';
+            
+            // すべての位置情報表示を削除
+            document.querySelectorAll('.position-info, .path-point, .path-segment').forEach(el => el.remove());
             
             for (const vehicleId in data) {
                 const vehicleData = data[vehicleId];
+                vehicleDebug += `車両 ${vehicleId}: (${vehicleData.position.x}m, ${vehicleData.position.y}m)<br>`;
                 
                 // 車両要素を取得または作成
                 let vehicle = vehicles[vehicleId];
@@ -68,8 +297,7 @@
                     vehicle.desiredPath.className = 'path desired-path';
                     
                     // ラベル設定
-                    vehicle.label.style.position = 'absolute';
-                    vehicle.label.style.fontSize = '12px';
+                    vehicle.label.className = 'vehicle-label';
                     vehicle.label.textContent = vehicleId;
                     
                     visualizer.appendChild(vehicle.element);
@@ -80,49 +308,129 @@
                     vehicles[vehicleId] = vehicle;
                 }
                 
+                // 車両の位置を計算
+                // X座標は道路に沿って
+                const vehicleX = viewInfo.roadLeft + (vehicleData.position.x * scaleValue * SCALE_FACTOR);
+                
+                // Y座標はレーンに合わせる
+                const laneIdx = Math.min(Math.floor(vehicleData.position.y / (roadInfo.width / roadInfo.lanes)), roadInfo.lanes - 1);
+                const vehicleY = viewInfo.roadTop + (laneIdx + 0.5) * viewInfo.laneHeight;
+                
                 // 車両の位置を更新
-                const x = vehicleData.position.x * scaleValue * SCALE_FACTOR;
-                const y = vehicleData.position.y * scaleValue * SCALE_FACTOR;
-                vehicle.element.style.transform = `translate(${x}px, ${y}px)`;
+                vehicle.element.style.left = `${vehicleX - 10}px`;
+                vehicle.element.style.top = `${vehicleY - 5}px`;
                 
                 // ラベルの位置を更新
-                vehicle.label.style.transform = `translate(${x}px, ${y - 15}px)`;
+                vehicle.label.style.left = `${vehicleX - 10}px`;
+                vehicle.label.style.top = `${vehicleY - 25}px`;
                 
-                // 経路を更新
+                // 位置情報表示を作成
+                const positionInfo = document.createElement('div');
+                positionInfo.className = 'position-info';
+                positionInfo.textContent = `(${vehicleData.position.x.toFixed(1)}m, ${vehicleData.position.y.toFixed(1)}m)`;
+                positionInfo.style.left = `${vehicleX + 15}px`;
+                positionInfo.style.top = `${vehicleY - 5}px`;
+                positionInfo.style.display = showPositions ? 'block' : 'none';
+                visualizer.appendChild(positionInfo);
+                
+                vehicleDebug += `  位置: (${vehicleX}px, ${vehicleY}px) = (${vehicleData.position.x.toFixed(1)}m, ${vehicleData.position.y.toFixed(1)}m)<br>`;
+                
+                // 予定経路を描画
                 if (vehicleData.plannedPath && vehicleData.plannedPath.length > 0) {
-                    updatePath(vehicle.plannedPath, vehicleData.plannedPath, scaleValue);
+                    drawPathWithPoints(vehicleData.plannedPath, scaleValue, viewInfo, 'planned', 3);
                 }
                 
+                // 希望経路を描画
                 if (vehicleData.desiredPath && vehicleData.desiredPath.length > 0) {
-                    updatePath(vehicle.desiredPath, vehicleData.desiredPath, scaleValue);
+                    drawPathWithPoints(vehicleData.desiredPath, scaleValue, viewInfo, 'desired', 3);
                 }
+            }
+            
+            // デバッグ情報を更新
+            const currentDebug = debugInfo.innerHTML;
+            if (currentDebug.includes('<strong>車両情報:</strong>')) {
+                debugInfo.innerHTML = currentDebug.split('<strong>車両情報:</strong>')[0] + vehicleDebug;
+            } else {
+                debugInfo.innerHTML += vehicleDebug;
             }
         }
         
-        function updatePath(pathElement, pathData, scaleValue) {
+        // 点と線を使って経路を描画する
+        function drawPathWithPoints(pathData, scaleValue, viewInfo, pathType, interval) {
             if (pathData.length < 2) return;
             
-            // パスの開始点
-            const startX = pathData[0].x * scaleValue * SCALE_FACTOR;
-            const startY = pathData[0].y * scaleValue * SCALE_FACTOR;
+            const points = [];
             
-            // パスの終了点
-            const endX = pathData[pathData.length - 1].x * scaleValue * SCALE_FACTOR;
-            const endY = pathData[pathData.length - 1].y * scaleValue * SCALE_FACTOR;
+            // 点を描画
+            for (let i = 0; i < pathData.length; i += interval) {
+                const point = pathData[i];
+                const pointX = viewInfo.roadLeft + point.x * scaleValue * SCALE_FACTOR;
+                const pointY = viewInfo.roadTop + point.y * scaleValue * SCALE_FACTOR;
+                
+                // 点を追加
+                const pathPoint = document.createElement('div');
+                pathPoint.className = `path-point ${pathType}-point`;
+                pathPoint.style.left = `${pointX}px`;
+                pathPoint.style.top = `${pointY}px`;
+                visualizer.appendChild(pathPoint);
+                
+                points.push({ x: pointX, y: pointY });
+            }
             
-            // 長さと角度を計算
-            const length = Math.sqrt(Math.pow(endX - startX, 2) + Math.pow(endY - startY, 2));
-            const angle = Math.atan2(endY - startY, endX - startX) * 180 / Math.PI;
-            
-            // パスの位置とスタイルを設定
-            pathElement.style.width = `${length}px`;
-            pathElement.style.transform = `translate(${startX}px, ${startY}px) rotate(${angle}deg)`;
-            pathElement.style.transformOrigin = '0 0';
+            // 線を描画
+            for (let i = 0; i < points.length - 1; i++) {
+                const start = points[i];
+                const end = points[i + 1];
+                
+                // 2点間の距離と角度を計算
+                const dx = end.x - start.x;
+                const dy = end.y - start.y;
+                const length = Math.sqrt(dx * dx + dy * dy);
+                const angle = Math.atan2(dy, dx) * 180 / Math.PI;
+                
+                // 線分を作成して追加
+                const segment = document.createElement('div');
+                segment.className = `path-segment ${pathType}-segment`;
+                segment.style.left = `${start.x}px`;
+                segment.style.top = `${start.y}px`;
+                segment.style.width = `${length}px`;
+                segment.style.transform = `rotate(${angle}deg)`;
+                
+                visualizer.appendChild(segment);
+            }
         }
+        
+        // スケール変更イベント
+        scale.addEventListener('input', function() {
+            const scaleValue = parseFloat(scale.value);
+            const viewInfo = drawRoad(scaleValue);
+            
+            // 車両位置も更新
+            fetch('data.json')
+                .then(response => response.json())
+                .then(data => {
+                    updateVehicles(data, scaleValue, viewInfo);
+                });
+        });
+        
+        // 初期描画
+        const initialScale = parseFloat(scale.value);
+        drawRoad(initialScale);
         
         // データの取得を開始
         fetchData();
+        
+        // ウィンドウリサイズ時に再描画
+        window.addEventListener('resize', function() {
+            const scaleValue = parseFloat(scale.value);
+            const viewInfo = drawRoad(scaleValue);
+            
+            fetch('data.json')
+                .then(response => response.json())
+                .then(data => {
+                    updateVehicles(data, scaleValue, viewInfo);
+                });
+        });
     </script>
 </body>
 </html>
-        

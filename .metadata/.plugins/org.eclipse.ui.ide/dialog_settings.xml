@@ -1,10 +1,20 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <section name="Workbench">
 	<list key="org.eclipse.ui.internal.wizards.datatransfer.SmartImportRootWizardPage.knownSources">
+		<item value="/home/yuki/omnetpp-5.4.1/OpenCV2X"/>
 		<item value="/home/yuki/omnetpp-5.4.1/OpenCV2X/scenarios/manhattan"/>
 		<item value="/home/miyata/omnetpp-5.4.1/OpenCV2X/scenarios"/>
 		<item value="/home/miyata/omnetpp-5.4.1/OpenCV2X"/>
 	</list>
 	<section name="ExternalProjectImportWizard">
+		<item value="false" key="WizardProjectsImportPage.STORE_NESTED_PROJECTS"/>
+		<item value="false" key="WizardProjectsImportPage.STORE_COPY_PROJECT_ID"/>
+		<item value="false" key="WizardProjectsImportPage.STORE_ARCHIVE_SELECTED"/>
+		<list key="WizardProjectsImportPage.STORE_DIRECTORIES">
+			<item value="/home/yuki/omnetpp-5.4.1/OpenCV2X"/>
+		</list>
+		<list key="WizardProjectsImportPage.STORE_ARCHIVES">
+			<item value=""/>
+		</list>
 	</section>
 </section>
