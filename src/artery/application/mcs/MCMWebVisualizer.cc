@@ -1,10 +1,10 @@
-#include "MCMWebVisualizer.h"
-#include "artery/utility/AsioScheduler.h"
+#include "artery/application/mcs/MCMWebVisualizer.h"
 #include <omnetpp.h>
-#include <boost/asio/ip/tcp.hpp>
-#include <boost/asio/write.hpp>
-#include <sstream>
+#include <fstream>
 #include <iostream>
+#include <iomanip>
+#include <sstream>
+#include <sys/stat.h>
 
 namespace artery {
 
@@ -16,34 +16,25 @@ MCMWebVisualizer& MCMWebVisualizer::getInstance() {
 void MCMWebVisualizer::initialize(omnetpp::cModule* module, int port) {
     mModule = module;
     
-    // AsioSchedulerの取得
-    auto scheduler = dynamic_cast<AsioScheduler*>(omnetpp::getSimulation()->getScheduler());
-    if (!scheduler) {
-        std::cout << "MCMWebVisualizer requires AsioScheduler" << std::endl;
-        return;
-    }
-    
-    // WebSocketサーバーを設立
     try {
-        using namespace boost::asio::ip;
+        // データ出力ディレクトリを作成
+        std::string dataDir = "mcm_visualization";
+        // std::filesystemの代わりにmkdirを使用
+        #ifdef _WIN32
+            mkdir(dataDir.c_str());
+        #else
+            mkdir(dataDir.c_str(), 0755);
+        #endif
         
-        // m_serviceに直接アクセス（getIoServiceメソッドは存在しない）
-        // AsioSchedulerのm_serviceがpublicでない場合は、別の方法が必要
-        boost::asio::io_service& io_service = scheduler->m_service;
-        
-        tcp::acceptor acceptor(io_service, tcp::endpoint(tcp::v4(), port));
-        
-        // 接続を待つ
-        tcp::socket socket(io_service);
-        acceptor.accept(socket);
-        
-        // Asioタスクを作成
-        mWebSocketTask.reset(new AsioTask(*scheduler, std::move(socket), *module));
-        
-        std::cout << "MCMWebVisualizer: Connection established on port " << port << std::endl;
-        
-        // HTMLページを送信
-        std::string html = R"(
+        // HTMLファイルを作成
+        std::string htmlPath = dataDir + "/index.html";
+        std::ofstream htmlFile;
+        htmlFile.open(htmlPath.c_str());
+        if (!htmlFile.is_open()) {
+            std::cerr << "MCMWebVisualizer: Could not open file for writing: " << htmlPath << std::endl;
+            return;
+        }
+        htmlFile << R"(
 <!DOCTYPE html>
 <html>
 <head>
@@ -74,13 +65,19 @@ void MCMWebVisualizer::initialize(omnetpp::cModule* module, int port) {
         const vehicles = {};
         const SCALE_FACTOR = 10; // メートルをピクセルに変換
         
-        // Webソケット接続
-        const socket = new WebSocket('ws://' + window.location.hostname + ':8081');
-        
-        socket.onmessage = function(event) {
-            const data = JSON.parse(event.data);
-            updateVehicles(data);
-        };
+        // JSONデータを定期的に取得
+        function fetchData() {
+            fetch('data.json?' + new Date().getTime())
+                .then(response => response.json())
+                .then(data => {
+                    updateVehicles(data);
+                    setTimeout(fetchData, 500); // 500ミリ秒ごとに更新
+                })
+                .catch(err => {
+                    console.error('Error fetching data:', err);
+                    setTimeout(fetchData, 1000); // エラー時は1秒後に再試行
+                });
+        }
         
         function updateVehicles(data) {
             const scaleValue = parseInt(scale.value);
@@ -159,25 +156,38 @@ void MCMWebVisualizer::initialize(omnetpp::cModule* module, int port) {
             pathElement.style.transformOrigin = '0 0';
         }
         
-        // スケール変更時の更新
-        scale.addEventListener('input', function() {
-            socket.send(JSON.stringify({ action: 'requestUpdate' }));
-        });
+        // データの取得を開始
+        fetchData();
     </script>
 </body>
 </html>
         )";
+        htmlFile.close();
         
-        mWebSocketTask->write(boost::asio::buffer(html));
+        // 初期の空のデータファイルを作成
+        std::string dataPath = dataDir + "/data.json";
+        std::ofstream dataFile;
+        dataFile.open(dataPath.c_str());
+        if (!dataFile.is_open()) {
+            std::cerr << "MCMWebVisualizer: Could not open file for writing: " << dataPath << std::endl;
+            return;
+        }
+        dataFile << "{}";
+        dataFile.close();
+        
+        std::cout << "MCMWebVisualizer: Created visualization files in mcm_visualization/" << std::endl;
+        std::cout << "To view visualization: " << std::endl;
+        std::cout << "  1. Run a HTTP server in your project directory:" << std::endl;
+        std::cout << "     python3 -m http.server 8080" << std::endl;
+        std::cout << "     (or for Python 2: python -m SimpleHTTPServer 8080)" << std::endl;
+        std::cout << "  2. Open http://localhost:8080/mcm_visualization/ in your browser" << std::endl;
         
     } catch (const std::exception& e) {
-        std::cerr << "MCMWebVisualizer: Error initializing WebSocket: " << e.what() << std::endl;
+        std::cerr << "MCMWebVisualizer: Error initializing files: " << e.what() << std::endl;
     }
 }
 
 void MCMWebVisualizer::visualizeMCM(const ManeuverCoordinationMessage* mcm) {
-    if (!mWebSocketTask) return;
-    
     const std::string& vehicleId = mcm->getTraciId();
     
     // 車両データを更新
@@ -189,29 +199,46 @@ void MCMWebVisualizer::visualizeMCM(const ManeuverCoordinationMessage* mcm) {
     data.latSpeed = mcm->getLatSpeed();
     data.lastUpdateTime = omnetpp::simTime().dbl();
     
-    // JSONデータを送信
-    std::string jsonUpdate = createJsonUpdate();
-    mWebSocketTask->write(boost::asio::buffer(jsonUpdate));
+    // JSONデータをファイルに書き込む
+    try {
+        std::string jsonUpdate = createJsonUpdate();
+        std::ofstream dataFile;
+        dataFile.open("mcm_visualization/data.json");
+        if (!dataFile.is_open()) {
+            std::cerr << "MCMWebVisualizer: Could not open data.json for writing" << std::endl;
+            return;
+        }
+        dataFile << jsonUpdate;
+        dataFile.close();
+    } catch (const std::exception& e) {
+        std::cerr << "MCMWebVisualizer: Error writing data file: " << e.what() << std::endl;
+    }
 }
 
 void MCMWebVisualizer::setEgoPaths(const std::string& vehicleId, const FrenetPath& plannedPath, const FrenetPath& desiredPath) {
-    if (!mWebSocketTask) return;
-    
     // 自車両データを更新
     VehiclePathData& data = mVehicleData[vehicleId];
     data.plannedPath = plannedPath;
     data.desiredPath = desiredPath;
     data.lastUpdateTime = omnetpp::simTime().dbl();
     
-    // JSONデータを送信
-    std::string jsonUpdate = createJsonUpdate();
-    mWebSocketTask->write(boost::asio::buffer(jsonUpdate));
+    // JSONデータをファイルに書き込む
+    try {
+        std::string jsonUpdate = createJsonUpdate();
+        std::ofstream dataFile;
+        dataFile.open("mcm_visualization/data.json");
+        if (!dataFile.is_open()) {
+            std::cerr << "MCMWebVisualizer: Could not open data.json for writing" << std::endl;
+            return;
+        }
+        dataFile << jsonUpdate;
+        dataFile.close();
+    } catch (const std::exception& e) {
+        std::cerr << "MCMWebVisualizer: Error writing data file: " << e.what() << std::endl;
+    }
 }
 
 void MCMWebVisualizer::close() {
-    // WebSocketタスクをクリーンアップ
-    mWebSocketTask.reset();
-    
     // 保存されたデータをクリア
     mVehicleData.clear();
     

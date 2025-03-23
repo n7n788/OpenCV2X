@@ -37,6 +37,7 @@ class AsioScheduler : public omnetpp::cScheduler
 		void cancelTask(AsioTask*);
 		void processTask(AsioTask*);
 
+
 		boost::asio::io_service m_service;
 
 	protected:
