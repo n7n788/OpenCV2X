@@ -3,6 +3,7 @@
 
 #include "artery/application/mcs/ManeuverCoordinationMessage.h"
 #include "artery/application/mcs/FrenetPlanning.h"
+#include "artery/application/mcs/MCMWebVisualizer.h"
 #include "artery/application/ItsG5Service.h"
 #include <map>
 #include <string>
@@ -88,6 +89,8 @@ private:
     // 前方車両の速度を取得
     double getLeadingVehicleSpeed(double lanePosition);
 
+    void finish() override;
+
     std::string mTraciId; //> 車両ID
     omnetpp::cMessage* mTrigger = nullptr; //> 送信トリガー
     
@@ -116,6 +119,7 @@ private:
     
     // 車両データプロバイダ
     const VehicleDataProvider* mVehicleDataProvider = nullptr;
+    bool mEnableVisualization = false;
 };
 
 } // namespace artery

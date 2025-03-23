@@ -13,6 +13,7 @@ add_library(core SHARED
     application/mcs/QuarticPolynomial.cc
     application/mcs/QuinticPolynomial.cc
     application/mcs/Trajectory.cc
+    application/mcs/MCMWebVisualizer.cc
     application/ExampleService.cc
     application/ItsG5BaseService.cc
     application/ItsG5PromiscuousService.cc

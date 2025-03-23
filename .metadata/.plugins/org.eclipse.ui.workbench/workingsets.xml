@@ -1,6 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <workingSetManager>
+<workingSet editPageId="org.eclipse.cdt.ui.CElementWorkingSetPage" factoryID="org.eclipse.ui.internal.WorkingSetFactory" id="1742718492085_3" label="manhattan" name="manhattan">
+<item factoryID="org.eclipse.ui.internal.model.ResourceFactory" path="/manhattan" type="4"/>
+</workingSet>
 <workingSet aggregate="true" factoryID="org.eclipse.ui.internal.WorkingSetFactory" id="1690865514533_0" label="Window Working Set" name="Aggregate for window 1690865514532"/>
 <workingSet aggregate="true" factoryID="org.eclipse.ui.internal.WorkingSetFactory" id="1691479900892_1" label="Window Working Set" name="Aggregate for window 1691479900892"/>
 <workingSet aggregate="true" factoryID="org.eclipse.ui.internal.WorkingSetFactory" id="1691480239524_2" label="Window Working Set" name="Aggregate for window 1691480239524"/>
+<mruList name="manhattan"/>
 </workingSetManager>

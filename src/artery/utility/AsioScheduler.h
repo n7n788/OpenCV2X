@@ -37,6 +37,8 @@ class AsioScheduler : public omnetpp::cScheduler
 		void cancelTask(AsioTask*);
 		void processTask(AsioTask*);
 
+		boost::asio::io_service m_service;
+
 	protected:
 		virtual omnetpp::cEvent* guessNextEvent() override;
 		virtual omnetpp::cEvent* takeNextEvent() override;
@@ -55,7 +57,6 @@ class AsioScheduler : public omnetpp::cScheduler
 			PAUSED, DWADLING, SYNC
 		};
 
-		boost::asio::io_service m_service;
 		boost::asio::io_service::work m_work;
 		boost::asio::steady_timer m_timer;
 		std::chrono::steady_clock::time_point m_reference;

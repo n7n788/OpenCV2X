@@ -19,4 +19,8 @@ simple ManeuverCoordinationService like ItsG5Service
         
         // 経路計画パラメータ
         double convergenceTime @unit(s) = default(5s);
+
+        // 可視化設定
+        bool enableVisualization = default(false);
+        int visualizationPort = default(8080);
 }

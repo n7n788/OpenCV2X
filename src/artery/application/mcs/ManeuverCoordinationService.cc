@@ -59,6 +59,17 @@ void ManeuverCoordinationService::initialize(int stage)
         
         // 車両データプロバイダの取得
         mVehicleDataProvider = &getFacilities().get_const<VehicleDataProvider>();
+        
+        // 可視化の設定
+        mEnableVisualization = par("enableVisualization").boolValue();
+        if (mEnableVisualization) {
+            try {
+                MCMWebVisualizer::getInstance().initialize(this, par("visualizationPort").intValue());
+                EV_INFO << "MCM visualization enabled on port " << par("visualizationPort").intValue() << std::endl;
+            } catch (const std::exception& e) {
+                EV_ERROR << "Failed to initialize MCM visualization: " << e.what() << std::endl;
+            }
+        }
     }
     else if (stage == InitStages::Self) {
         mTraciId = getFacilities().get_const<Identity>().traci;
@@ -223,6 +234,11 @@ ManeuverCoordinationMessage* ManeuverCoordinationService::generate()
     mPreviousPlannedPath = plannedPath;
     mPreviousDesiredPath = desiredPath;
     
+    // 可視化を更新
+    if (mEnableVisualization) {
+        MCMWebVisualizer::getInstance().setEgoPaths(mTraciId, plannedPath, desiredPath);
+    }
+    
     return mcm;
 }
 
@@ -242,6 +258,11 @@ void ManeuverCoordinationService::indicate(const vanetza::btp::DataIndication&, 
     mVehiclePoses[senderId] = std::make_pair(mcm->getLatPos(), mcm->getLonPos());
     mVehicleSpeeds[senderId] = std::make_pair(mcm->getLatSpeed(), mcm->getLonSpeed());
     
+    // 可視化を更新
+    if (mEnableVisualization) {
+        MCMWebVisualizer::getInstance().visualizeMCM(mcm);
+    }
+
     delete packet;
 }
 
@@ -377,6 +398,15 @@ double ManeuverCoordinationService::getLeadingVehicleSpeed(double lanePosition)
     }
     
     return leadingVehicleSpeed;
+}
+
+void ManeuverCoordinationService::finish()
+{
+    ItsG5Service::finish();
+    
+    if (mEnableVisualization) {
+        MCMWebVisualizer::getInstance().close();
+    }
 }
 
 } // namespace artery
