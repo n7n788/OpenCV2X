@@ -4,6 +4,7 @@
 #include "artery/application/mcs/FrenetPath.h"
 #include "artery/application/mcs/FrenetPlanning.h"
 #include "artery/application/VehicleDataProvider.h"
+#include "artery/utility/Identity.h"
 #include "artery/utility/IdentityRegistry.h"
 #include "artery/utility/InitStages.h"
 #include "artery/traci/VehicleController.h"
@@ -119,25 +120,33 @@ ManeuverCoordinationMessage* ManeuverCoordinationService::generate()
     double lonSpeed = 0.0; // 横方向の速度は通常0に近い
     double lonAccel = 0.0; // 横方向の加速度も通常0に近い
     
-    // 全レーンに対して最高速度に達する候補経路を生成
+    // レーン中央位置を計算
+    std::vector<double> laneCenterPositions;
+    for (double lanePos : mAvailableLanes) {
+        // レーンの中央位置 = レーンの左端 + レーン幅の半分
+        double laneCenterPos = lanePos + (mLaneWidth / 2.0);
+        laneCenterPositions.push_back(laneCenterPos);
+    }
+    
+    // 全レーンに対して最高速度に達する候補経路を生成（レーン中央位置を使用）
     auto speedPathCandidates = mPlanner.generateMaxSpeedPathCandidates(
         latPos, latSpeed, latAccel,
         lonPos, lonSpeed, lonAccel,
-        mMaxSpeed, mAvailableLanes, mConvTime
+        mMaxSpeed, laneCenterPositions, mConvTime
     );
     pathCandidates.insert(pathCandidates.end(), speedPathCandidates.begin(), speedPathCandidates.end());
     
     // 前方車両が存在するレーンに対して、目標位置に達する候補経路を生成
-    for (double lanePos : mAvailableLanes) {
-        double leadingVehiclePos = getLeadingVehiclePosition(lanePos);
+    for (double laneCenterPos : laneCenterPositions) {
+        double leadingVehiclePos = getLeadingVehiclePosition(laneCenterPos);
         if (leadingVehiclePos > 0) { // 前方車両が存在する場合
-            double leadingVehicleSpeed = getLeadingVehicleSpeed(lanePos);
+            double leadingVehicleSpeed = getLeadingVehicleSpeed(laneCenterPos);
             double targetPos = leadingVehiclePos - mVehicleLength - mSafetyDistance;
             
             auto posPathCandidates = mPlanner.generateMaxPosPathCandidates(
                 latPos, latSpeed, latAccel,
                 lonPos, lonSpeed, lonAccel,
-                targetPos, leadingVehicleSpeed, { lanePos }, mConvTime
+                targetPos, leadingVehicleSpeed, { laneCenterPos }, mConvTime
             );
             pathCandidates.insert(pathCandidates.end(), posPathCandidates.begin(), posPathCandidates.end());
         }
@@ -294,7 +303,7 @@ bool ManeuverCoordinationService::checkCollision(const FrenetPath& path1, const 
         return false;
     }
     
-    // 軌道の長さは同じであるiき
+    // 軌道の長さは同じであるため最小値を使用
     size_t size = std::min({lat1.size(), lon1.size(), lat2.size(), lon2.size()});
     
     // 各時点で距離をチェック
@@ -337,7 +346,7 @@ bool ManeuverCoordinationService::acceptPath(const std::string& senderId, const 
     return false; // デフォルトでは拒否
 }
 
-double ManeuverCoordinationService::getLeadingVehiclePosition(double lanePosition)
+double ManeuverCoordinationService::getLeadingVehiclePosition(double laneCenterPosition)
 {
     // 前方車両の位置を取得する処理
     // ローカル環境モデルから前方車両の情報を取得
@@ -354,8 +363,8 @@ double ManeuverCoordinationService::getLeadingVehiclePosition(double lanePositio
         // 自車両は除外
         if (vehicleId == mTraciId) continue;
         
-        // 同一レーン上の車両かチェック
-        if (std::abs(pos.second - lanePosition) <= LANE_THRESHOLD) {
+        // 同一レーン上の車両かチェック（レーン中央位置との距離で判定）
+        if (std::abs(pos.second - laneCenterPosition) <= LANE_THRESHOLD) {
             // 前方にある車両かチェック
             double distance = pos.first - mVehicleDataProvider->position().x.value();
             if (distance > 0 && distance < minDistance) {
@@ -368,7 +377,7 @@ double ManeuverCoordinationService::getLeadingVehiclePosition(double lanePositio
     return leadingVehiclePos;
 }
 
-double ManeuverCoordinationService::getLeadingVehicleSpeed(double lanePosition)
+double ManeuverCoordinationService::getLeadingVehicleSpeed(double laneCenterPosition)
 {
     // 前方車両の速度を取得する処理
     
@@ -384,8 +393,8 @@ double ManeuverCoordinationService::getLeadingVehicleSpeed(double lanePosition)
         // 自車両は除外
         if (vehicleId == mTraciId) continue;
         
-        // 同一レーン上の車両かチェック
-        if (std::abs(pos.second - lanePosition) <= LANE_THRESHOLD) {
+        // 同一レーン上の車両かチェック（レーン中央位置との距離で判定）
+        if (std::abs(pos.second - laneCenterPosition) <= LANE_THRESHOLD) {
             // 前方にある車両かチェック
             double distance = pos.first - mVehicleDataProvider->position().x.value();
             if (distance > 0 && distance < minDistance) {
