@@ -15,7 +15,7 @@ simple ManeuverCoordinationService like ItsG5Service
         
         // レーン設定
         int numLanes = default(3);
-        double laneWidth @unit(m) = default(3.5m);
+        double laneWidth @unit(m) = default(3.2m);
         
         // 経路計画パラメータ
         double convergenceTime @unit(s) = default(5s);

@@ -129,20 +129,29 @@ ManeuverCoordinationMessage* ManeuverCoordinationService::generate()
     }
     
     // 全レーンに対して最高速度に達する候補経路を生成（レーン中央位置を使用）
-    auto speedPathCandidates = mPlanner.generateMaxSpeedPathCandidates(
-        latPos, latSpeed, latAccel,
-        lonPos, lonSpeed, lonAccel,
-        mMaxSpeed, laneCenterPositions, mConvTime
-    );
-    pathCandidates.insert(pathCandidates.end(), speedPathCandidates.begin(), speedPathCandidates.end());
+    // auto speedPathCandidates = mPlanner.generateMaxSpeedPathCandidates(
+    //     latPos, latSpeed, latAccel,
+    //     lonPos, lonSpeed, lonAccel,
+    //     mMaxSpeed, laneCenterPositions, mConvTime
+    // );
+    // pathCandidates.insert(pathCandidates.end(), speedPathCandidates.begin(), speedPathCandidates.end());
     
     // 前方車両が存在するレーンに対して、目標位置に達する候補経路を生成
     for (double laneCenterPos : laneCenterPositions) {
         double leadingVehiclePos = getLeadingVehiclePosition(laneCenterPos);
+    
+        std::cout << mTraciId << ": leadingVehiclePos: " << leadingVehiclePos << " m" << std::endl;
+
         if (leadingVehiclePos > 0) { // 前方車両が存在する場合
             double leadingVehicleSpeed = getLeadingVehicleSpeed(laneCenterPos);
-            double targetPos = leadingVehiclePos - mVehicleLength - mSafetyDistance;
-            
+            // 先行車両の5秒後の予測位置 = 現在位置 + 速度 * 時間
+            double predictedLeadingVehiclePos = leadingVehiclePos + (leadingVehicleSpeed * mConvTime);
+            // 目標位置 = 先行車両の5秒後の予測位置 - 自車両の長さ - 安全距離
+            double targetPos = predictedLeadingVehiclePos - mVehicleLength - mSafetyDistance;
+
+            std::cout << mTraciId << ": leadingVehicleSpeed: " << leadingVehicleSpeed << " m/s" << std::endl;
+            std::cout << mTraciId << ": targetPos: " << targetPos << " m" << std::endl; 
+
             auto posPathCandidates = mPlanner.generateMaxPosPathCandidates(
                 latPos, latSpeed, latAccel,
                 lonPos, lonSpeed, lonAccel,
