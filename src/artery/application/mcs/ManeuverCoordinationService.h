@@ -127,6 +127,11 @@ private:
     // 車両データプロバイダ
     const VehicleDataProvider* mVehicleDataProvider = nullptr;
     bool mEnableVisualization = false;
+    double mLastUpdateTime = 0.0; //> 最後に更新した時間
+  
+    bool mLaneChangeInProgress = false; //> 車線変更中フラグ
+    int mTargetLane = -1; //> 目標レーン
+    double mLaneChangeStartTime = 0.0; //> 車線変更開始時間
 };
 
 } // namespace artery
