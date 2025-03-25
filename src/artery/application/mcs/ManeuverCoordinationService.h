@@ -88,7 +88,14 @@ private:
     
     // 前方車両の速度を取得
     double getLeadingVehicleSpeed(double lanePosition);
-
+  
+    /*
+     * レーン変更コマンドを発行
+     * @param controller 車両コントローラー
+     * @param targetLane 目標レーン番号
+     */
+    void changeLane(traci::VehicleController* controller, int targetLane);
+ 
     void finish() override;
 
     std::string mTraciId; //> 車両ID
