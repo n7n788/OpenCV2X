@@ -108,26 +108,35 @@ void ManeuverCoordinationService::trigger()
             
             // 次の目標点のインデックスを計算（サンプリング間隔は0.1秒）
             int nextPointIndex = std::min(5, static_cast<int>(latTrajectory.getPoses().size()) - 1); // 0.5秒後
+
+            // for (int i = 0; i < lonTrajectory.getPoses().size(); i++) {
+            //     std::cout << "lonTrajectory.getPoses()[" << i << "]: " << lonTrajectory.getPoses()[i] << std::endl;
+            // }
             
             if (nextPointIndex >= 0) {
                 // 次の目標点の位置と速度
                 double targetLatPos = latTrajectory.getPoses()[nextPointIndex];
-                double targetLonPos = lonTrajectory.getPoses()[nextPointIndex];
+                double targetLonPos = lonTrajectory.getPoses().back();
                 double targetLatSpeed = latTrajectory.getSpeeds()[nextPointIndex];
                 
                 EV_INFO << "Vehicle " << mTraciId << " target: pos=(" << targetLatPos << "," << targetLonPos
                        << "), speed=" << targetLatSpeed << " at " << omnetpp::simTime() << "s\n";
-                
+                std::cout << "Vehicle " << mTraciId << " target: pos=(" << targetLatPos << "," << targetLonPos
+                          << "), speed=" << targetLatSpeed << " at " << omnetpp::simTime() << "s\n";                
+
                 // 目標速度に設定（0以上の値のみ）
                 if (targetLatSpeed >= 0) {
                     vehicleController->setSpeed(targetLatSpeed * vanetza::units::si::meter_per_second);
                     EV_INFO << "Set speed to " << targetLatSpeed << " m/s for vehicle " << mTraciId << std::endl;
+                    std::cout << "Set speed to " << targetLatSpeed << " m/s for vehicle " << mTraciId << std::endl;
                 }
                 
                 // レーン変更が必要かどうかを確認
                 double laneWidth = mLaneWidth;
                 int currentLane = static_cast<int>(currentLonPos / laneWidth);
                 int targetLane = static_cast<int>(targetLonPos / laneWidth);
+
+                std::cout << "currentLane: " << currentLane << ", " << "targetLane: " << targetLane << std::endl;
                 
                 if (currentLane != targetLane) {
                     // レーン変更を実行
@@ -168,12 +177,12 @@ ManeuverCoordinationMessage* ManeuverCoordinationService::generate()
     }
     
     // 全レーンに対して最高速度に達する候補経路を生成（レーン中央位置を使用）
-    // auto speedPathCandidates = mPlanner.generateMaxSpeedPathCandidates(
-    //     latPos, latSpeed, latAccel,
-    //     lonPos, lonSpeed, lonAccel,
-    //     mMaxSpeed, laneCenterPositions, mConvTime
-    // );
-    // pathCandidates.insert(pathCandidates.end(), speedPathCandidates.begin(), speedPathCandidates.end());
+    auto speedPathCandidates = mPlanner.generateMaxSpeedPathCandidates(
+        latPos, latSpeed, latAccel,
+        lonPos, lonSpeed, lonAccel,
+        mMaxSpeed, laneCenterPositions, mConvTime
+    );
+    pathCandidates.insert(pathCandidates.end(), speedPathCandidates.begin(), speedPathCandidates.end());
     
     // 前方車両が存在するレーンに対して、目標位置に達する候補経路を生成
     for (double laneCenterPos : laneCenterPositions) {
@@ -462,28 +471,31 @@ void ManeuverCoordinationService::changeLane(traci::VehicleController* controlle
         // 現在走行中の道路（エッジ）を取得
         std::string currentEdge = controller->getLiteAPI().vehicle().getRoadID(controller->getVehicleId());
         
-        // 縦方向位置を取得
-        double lateralPosition = mVehicleDataProvider->position().y.value();
-        int currentLane = static_cast<int>(lateralPosition / mLaneWidth);
+        // 横方向位置を取得
+        double lonPosition = mVehicleDataProvider->position().y.value();
+        int currentLane = static_cast<int>(lonPosition / mLaneWidth);
         
         EV_INFO << "Vehicle " << mTraciId << " on edge " << currentEdge 
                << ", current lane: " << currentLane << ", target lane: " << targetLane << std::endl;
-        
+        std::cout << "Vehicle " << mTraciId << " on edge " << currentEdge 
+                  << ", current lane: " << currentLane << ", target lane: " << targetLane << std::endl; 
         if (currentLane != targetLane) {
             // 方法1: changeLaneコマンドを使用（SUMOのバージョンによって動作が異なる場合があります）
-            controller->getLiteAPI().vehicle().changeLane(
-                controller->getVehicleId(), targetLane, 2.0);  // 2.0秒で変更
+            // controller->getLiteAPI().vehicle().changeLane(
+            //     controller->getVehicleId(), targetLane, 5.0);  // 5.0秒で変更
             
             // 方法2: moveToCコマンドを使用して正確な位置に移動
-            // double newLateralPos = (targetLane + 0.5) * mLaneWidth;  // レーンの中央位置
-            // double longitudinalPos = mVehicleDataProvider->position().x.value();
-            // traci::TraCIPosition position;
-            // position.x = longitudinalPos;
-            // position.y = newLateralPos;
-            // controller->getLiteAPI().vehicle().moveToXY(
-            //     controller->getVehicleId(), currentEdge, -1, position.x, position.y, -1, 2.0);
+            double newLonPos = (targetLane + 0.5) * mLaneWidth;  // レーンの中央位置
+            double latPos = mVehicleDataProvider->position().x.value();
+            traci::TraCIPosition position;
+            position.x = latPos + 100; 
+            position.y = newLonPos;
+            std::cout << "latPos: " << latPos << ", newLonPos: " << newLonPos << std::endl;
+            controller->getLiteAPI().vehicle().moveToXY(
+                controller->getVehicleId(), currentEdge, -1, position.x, position.y, -1, 5.0);
             
             EV_INFO << "Lane change command sent for vehicle " << mTraciId << std::endl;
+            std::cout << "Lane change command sent for vehicle " << mTraciId << std::endl;
         }
     } catch (const std::exception& e) {
         EV_ERROR << "Lane change failed: " << e.what() << std::endl;
