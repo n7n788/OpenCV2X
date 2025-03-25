@@ -72,7 +72,7 @@
         }
         .controls { 
             position: fixed; 
-            top: 10px; 
+            bottom: 10px; 
             right: 10px; 
             background: rgba(255,255,255,0.9); 
             padding: 10px; 
@@ -80,6 +80,7 @@
             box-shadow: 0 2px 5px rgba(0,0,0,0.2);
             z-index: 100;
             font-size: 14px;
+            max-width: 300px;
         }
         .debug-info {
             position: fixed;
@@ -120,6 +121,17 @@
             text-align: center;
             white-space: nowrap;
         }
+        .vehicle-info {
+            position: absolute;
+            font-size: 11px;
+            color: #333;
+            background-color: rgba(255,255,255,0.8);
+            padding: 2px 5px;
+            border-radius: 3px;
+            white-space: nowrap;
+            z-index: 9;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+        }
         .position-info {
             position: absolute;
             font-size: 10px;
@@ -136,6 +148,11 @@
         }
         .toggle-switch input {
             margin-right: 5px;
+        }
+        .info-panel {
+            margin-top: 10px;
+            border-top: 1px solid #ddd;
+            padding-top: 5px;
         }
     </style>
 </head>
@@ -154,6 +171,9 @@
         </div>
         <div class="toggle-switch">
             <label><input type="checkbox" id="show-candidates" checked> 候補経路</label>
+        </div>
+        <div class="toggle-switch">
+            <label><input type="checkbox" id="show-vehicle-info" checked> 車両情報</label>
         </div>
         
         <div>
@@ -174,6 +194,11 @@
             <button id="toggle-debug" style="font-size: 14px; padding: 3px 8px;">デバッグ情報</button>
             <button id="toggle-positions" style="font-size: 14px; padding: 3px 8px;">位置情報表示</button>
         </div>
+        
+        <div class="info-panel">
+            <div id="selected-vehicle">選択中の車両: なし</div>
+            <div id="selected-info"></div>
+        </div>
     </div>
     
     <div id="debug-info" class="debug-info" style="display: none;"></div>
@@ -187,11 +212,15 @@
         const showPlanned = document.getElementById('show-planned');
         const showDesired = document.getElementById('show-desired');
         const showCandidates = document.getElementById('show-candidates');
+        const showVehicleInfo = document.getElementById('show-vehicle-info');
+        const selectedVehicleElem = document.getElementById('selected-vehicle');
+        const selectedInfoElem = document.getElementById('selected-info');
         
         const vehicles = {};
-        const positionInfos = {};
+        const vehicleInfos = {};
         const SCALE_FACTOR = 1; // メートルをピクセルに変換
         let showPositions = false;
+        let selectedVehicle = null;
         
         // デバッグ情報表示切り替え
         toggleDebug.addEventListener('click', function() {
@@ -204,6 +233,14 @@
             const infos = document.querySelectorAll('.position-info');
             infos.forEach(info => {
                 info.style.display = showPositions ? 'block' : 'none';
+            });
+        });
+        
+        // 車両情報表示切り替え
+        showVehicleInfo.addEventListener('change', function() {
+            const infos = document.querySelectorAll('.vehicle-info');
+            infos.forEach(info => {
+                info.style.display = this.checked ? 'block' : 'none';
             });
         });
         
@@ -228,6 +265,39 @@
                 el.style.display = this.checked ? 'block' : 'none';
             });
         });
+        
+        // 車両クリックイベント
+        visualizer.addEventListener('click', function(event) {
+            const clickedVehicle = event.target.closest('.vehicle');
+            if (clickedVehicle) {
+                const vehicleId = clickedVehicle.dataset.id;
+                selectedVehicle = vehicleId;
+                selectedVehicleElem.textContent = `選択中の車両: ${vehicleId}`;
+                updateSelectedVehicleInfo(vehicleId);
+            }
+        });
+        
+        // 選択された車両の情報を更新
+        function updateSelectedVehicleInfo(vehicleId) {
+            fetch('data.json?' + new Date().getTime())
+                .then(response => response.json())
+                .then(data => {
+                    if (data[vehicleId]) {
+                        const vehData = data[vehicleId];
+                        selectedInfoElem.innerHTML = `
+                            <div>位置: (${vehData.position.x.toFixed(2)}m, ${vehData.position.y.toFixed(2)}m)</div>
+                            <div>速度: ${vehData.speed.toFixed(2)}m/s</div>
+                            <div>予定経路ポイント: ${vehData.plannedPath.length}</div>
+                            <div>希望経路ポイント: ${vehData.desiredPath.length}</div>
+                        `;
+                    } else {
+                        selectedInfoElem.innerHTML = `車両情報が見つかりません`;
+                    }
+                })
+                .catch(err => {
+                    selectedInfoElem.innerHTML = `データ取得エラー: ${err.message}`;
+                });
+        }
         
         // 道路情報の定義
         const roadInfo = {
@@ -312,6 +382,12 @@
                     const scaleValue = parseFloat(scale.value);
                     const viewInfo = drawRoad(scaleValue);
                     updateVehicles(data, scaleValue, viewInfo);
+                    
+                    // 選択中の車両情報を更新
+                    if (selectedVehicle && data[selectedVehicle]) {
+                        updateSelectedVehicleInfo(selectedVehicle);
+                    }
+                    
                     setTimeout(fetchData, 500); // 500ミリ秒ごとに更新
                 })
                 .catch(err => {
@@ -324,8 +400,8 @@
         function updateVehicles(data, scaleValue, viewInfo) {
             let vehicleDebug = '<strong>車両情報:</strong><br>';
             
-            // すべての位置情報表示を削除
-            document.querySelectorAll('.position-info, .path-point, .path-segment').forEach(el => el.remove());
+            // すべての情報表示を削除
+            document.querySelectorAll('.position-info, .vehicle-info, .path-point, .path-segment').forEach(el => el.remove());
             
             for (const vehicleId in data) {
                 const vehicleData = data[vehicleId];
@@ -343,7 +419,9 @@
                     
                     // 車両要素の設定
                     vehicle.element.className = 'vehicle';
+                    vehicle.element.dataset.id = vehicleId;
                     vehicle.element.style.backgroundColor = '#2ca02c';
+                    vehicle.element.style.cursor = 'pointer';
                     
                     // パス要素の設定
                     vehicle.plannedPath.className = 'path planned-path';
@@ -386,7 +464,18 @@
                 positionInfo.style.display = showPositions ? 'block' : 'none';
                 visualizer.appendChild(positionInfo);
                 
+                // 車両情報（速度・加速度）表示を作成
+                const vehicleInfo = document.createElement('div');
+                vehicleInfo.className = 'vehicle-info';
+                vehicleInfo.innerHTML = `速度: ${vehicleData.speed.toFixed(1)}m/s<br>加速度: ${(vehicleData.acceleration || 0).toFixed(1)}m/s²`;
+                vehicleInfo.style.left = `${vehicleX - 10}px`;
+                vehicleInfo.style.top = `${vehicleY + 10}px`;
+                vehicleInfo.style.display = showVehicleInfo.checked ? 'block' : 'none';
+                visualizer.appendChild(vehicleInfo);
+                vehicleInfos[vehicleId] = vehicleInfo;
+                
                 vehicleDebug += `  位置: (${vehicleX}px, ${vehicleY}px) = (${vehicleData.position.x.toFixed(1)}m, ${vehicleData.position.y.toFixed(1)}m)<br>`;
+                vehicleDebug += `  速度: ${vehicleData.speed.toFixed(1)}m/s, 加速度: ${(vehicleData.acceleration || 0).toFixed(1)}m/s²<br>`;
                 
                 // 予定経路を描画
                 if (vehicleData.plannedPath && vehicleData.plannedPath.length > 0) {

@@ -52,6 +52,9 @@ void MCMWebVisualizer::visualizeMCM(const ManeuverCoordinationMessage* mcm) {
     data.latPos = mcm->getLatPos();
     data.lonPos = mcm->getLonPos();
     data.latSpeed = mcm->getLatSpeed();
+    data.lonSpeed = mcm->getLonSpeed();
+    data.latAccel = mcm->getLatAccel();
+    data.lonAccel = mcm->getLonAccel();
     data.lastUpdateTime = omnetpp::simTime().dbl();
     
     // JSONデータをファイルに書き込む
@@ -131,6 +134,7 @@ std::string MCMWebVisualizer::pathsArrayToJson(const std::vector<FrenetPath>& pa
     return json.str();
 }
 
+
 std::string MCMWebVisualizer::createJsonUpdate() {
     std::ostringstream json;
     json << "{";
@@ -148,7 +152,13 @@ std::string MCMWebVisualizer::createJsonUpdate() {
         
         json << "\"" << vehicleId << "\":{";
         json << "\"position\":{\"x\":" << data.latPos << ",\"y\":" << data.lonPos << "},";
+        // 主な速度は縦方向の速度を使用
         json << "\"speed\":" << data.latSpeed << ",";
+        // 加速度も追加
+        json << "\"acceleration\":" << data.latAccel << ",";
+        // 横方向の速度と加速度も追加
+        json << "\"lonSpeed\":" << data.lonSpeed << ",";
+        json << "\"lonAccel\":" << data.lonAccel << ",";
         json << "\"plannedPath\":" << pathToJson(data.plannedPath) << ",";
         json << "\"desiredPath\":" << pathToJson(data.desiredPath) << ",";
         json << "\"pathCandidates\":" << pathsArrayToJson(data.pathCandidates);

@@ -53,9 +53,12 @@ private:
         double latPos;
         double lonPos;
         double latSpeed;
+        double lonSpeed;
+        double latAccel;
+        double lonAccel;
         double lastUpdateTime;
     };
-    
+
     std::unordered_map<std::string, VehiclePathData> mVehicleData;
 };
 
