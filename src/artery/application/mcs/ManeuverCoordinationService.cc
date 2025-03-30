@@ -50,7 +50,7 @@ void ManeuverCoordinationService::initialize(int stage)
         mConvTime = par("convergenceTime").doubleValue();
         
         // 利用可能なレーン位置の設定
-        int mNumLanes = par("numLanes").intValue();
+        mNumLanes = par("numLanes").intValue();
         for (int i = 0; i < mNumLanes; i++) {
             mAvailableLanes.push_back(i * mLaneWidth);
         }
@@ -118,26 +118,27 @@ void ManeuverCoordinationService::trigger()
                 double currentLonPos = mVehicleDataProvider->position().y.value();
                 int currentLane = static_cast<int>((mLaneWidth * mNumLanes -  currentLonPos) / mLaneWidth);
 
-                std::cout << mNumLanes << " lanes, lane width: " << mLaneWidth << " m" << std::endl; 
+                // std::cout << mNumLanes << " lanes, lane width: " << mLaneWidth << " m" << std::endl; 
                 // 目標レーンを取得 (FrenetPathの最終目標位置から計算)
                 const auto& lonPoses = plannedPath.getLonTrajectory().getPoses();
                 if (!lonPoses.empty()) {
                     double targetLonPos = lonPoses.back();
                     int targetLane = static_cast<int>((mLaneWidth * mNumLanes - targetLonPos) / mLaneWidth);
 
-                    std::cout << "Vehicle " << mTraciId << " currentLanePos: " << currentLonPos << " m, " << 
-                                 " targetLanePos: " << targetLonPos << " m, mLaneWidth: " << mLaneWidth << " m" << 
-                                 "currentLane: " << currentLane << ", targetLane: " << targetLane << std::endl;
-                    // 現在のレーンと目標レーンが異なる場合、車線変更を開始
-                    if (!mLaneChangeInProgress) {
-                        // 目標レーンへ向かって車線変更コマンドを実行
-                        // duration: 車線変更にかかる秒数（mConvTimeを使用）
+                    // std::cout << "Vehicle " << mTraciId << " currentLanePos: " << currentLonPos << " m, " << 
+                    //              " targetLanePos: " << targetLonPos << " m, mLaneWidth: " << mLaneWidth << " m" << 
+                    //              "currentLane: " << currentLane << ", targetLane: " << targetLane << std::endl;
+                    // sumoのデフォルトの車線変更を防止するために、現在の車線と目標車線が同じ場合でも車線変更コマンドを送信
+                    // 目標レーンへ向かって車線変更コマンドを実行
+                    // duration: 車線変更にかかる秒数（mConvTimeを使用）
+
                         api.vehicle().changeLane(
                             mTraciId,
                             targetLane,
                             mConvTime
                         );
-                        
+                    // 現在のレーンと目標レーンが異なる場合、ステータスを変更して車線変更を開始
+                    if (!mLaneChangeInProgress && currentLane != targetLane) {
                         EV_INFO << "Vehicle " << mTraciId << " changing lane from " 
                                 << currentLane << " to " << targetLane 
                                 << " over " << mConvTime << " seconds\n";
@@ -220,7 +221,12 @@ ManeuverCoordinationMessage* ManeuverCoordinationService::generate()
     double lonPos = mVehicleDataProvider->position().y.value();
     double lonSpeed = 0.0; // 横方向の速度は通常0に近い
     double lonAccel = 0.0; // 横方向の加速度も通常0に近い
-    
+   
+    double maxSpeed = mMaxSpeed;
+    auto vehicleController = getFacilities().get_mutable_ptr<traci::VehicleController>();
+    if (vehicleController) maxSpeed = vehicleController->getVehicleType().getMaxSpeed().value();
+    // std::cout << "traciId: " << mTraciId << ", maxSpeed: " << maxSpeed << " m/s" << std::endl;
+
     // レーン中央位置を計算
     std::vector<double> laneCenterPositions;
     for (double lanePos : mAvailableLanes) {
@@ -233,7 +239,7 @@ ManeuverCoordinationMessage* ManeuverCoordinationService::generate()
     auto speedPathCandidates = mPlanner.generateMaxSpeedPathCandidates(
         latPos, latSpeed, latAccel,
         lonPos, lonSpeed, lonAccel,
-        mMaxSpeed, laneCenterPositions, mConvTime
+        maxSpeed, laneCenterPositions, mConvTime
     );
     pathCandidates.insert(pathCandidates.end(), speedPathCandidates.begin(), speedPathCandidates.end());
     
@@ -248,7 +254,7 @@ ManeuverCoordinationMessage* ManeuverCoordinationService::generate()
             // 先行車両の5秒後の予測位置 = 現在位置 + 速度 * 時間
             double predictedLeadingVehiclePos = leadingVehiclePos + (leadingVehicleSpeed * mConvTime);
             // 目標位置 = 先行車両の5秒後の予測位置 - 自車両の長さ - 安全距離
-            double targetPos = predictedLeadingVehiclePos - mVehicleLength - mSafetyDistance;
+            double maxTargetPos = predictedLeadingVehiclePos - mVehicleLength - mSafetyDistance;
 
             // std::cout << mTraciId << ": leadingVehicleSpeed: " << leadingVehicleSpeed << " m/s" << std::endl;
             // std::cout << mTraciId << ": targetPos: " << targetPos << " m" << std::endl; 
@@ -256,7 +262,7 @@ ManeuverCoordinationMessage* ManeuverCoordinationService::generate()
             auto posPathCandidates = mPlanner.generateMaxPosPathCandidates(
                 latPos, latSpeed, latAccel,
                 lonPos, lonSpeed, lonAccel,
-                targetPos, leadingVehicleSpeed, { laneCenterPos }, mConvTime
+                maxTargetPos, leadingVehicleSpeed, maxSpeed, { laneCenterPos }, mConvTime
             );
             pathCandidates.insert(pathCandidates.end(), posPathCandidates.begin(), posPathCandidates.end());
         }
@@ -401,7 +407,8 @@ bool ManeuverCoordinationService::checkCollision(const FrenetPath& path1, const 
     // 経路の衝突判定ロジック
     // 軌道の各時点で位置を比較し、一定の閾値以下なら衝突と判定
     
-    const double COLLISION_THRESHOLD = mVehicleLength / 2 + mSafetyDistance / 4;
+    const double LAT_COLLISION_THRESHOLD = mVehicleLength / 2 + mSafetyDistance / 4;
+    const double LON_COLLISION_THRESHOLD = mLaneWidth / 2;
     
     const auto& lat1 = path1.getLatTrajectory().getPoses();
     const auto& lon1 = path1.getLonTrajectory().getPoses();
@@ -418,11 +425,10 @@ bool ManeuverCoordinationService::checkCollision(const FrenetPath& path1, const 
     
     // 各時点で距離をチェック
     for (size_t i = 0; i < size; i++) {
-        double dx = lat1[i] - lat2[i];
-        double dy = lon1[i] - lon2[i];
-        double distance = std::sqrt(dx*dx + dy*dy);
+        double dlat = lat1[i] - lat2[i];
+        double dlon = lon1[i] - lon2[i];
         
-        if (distance < COLLISION_THRESHOLD) {
+        if (abs(dlat) < LAT_COLLISION_THRESHOLD && abs(dlon) < LON_COLLISION_THRESHOLD) {
             return true; // 衝突あり
         }
     }
@@ -486,7 +492,7 @@ double ManeuverCoordinationService::getLeadingVehicleSpeed(double laneCenterPosi
     // 前方車両の速度を取得する処理
     
     double minDistance = std::numeric_limits<double>::max();
-    double leadingVehicleSpeed = mMaxSpeed; // デフォルトは最大速度
+    double leadingVehicleSpeed = DBL_MAX; // デフォルトは最大速度
     
     const double LANE_THRESHOLD = mLaneWidth / 2;
     

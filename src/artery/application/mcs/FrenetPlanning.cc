@@ -39,7 +39,8 @@ std::vector<FrenetPath> FrenetPlanning::generateMaxSpeedPathCandidates(double la
 
 std::vector<FrenetPath> FrenetPlanning::generateMaxPosPathCandidates(double latPos, double latSpeed, double latAccel,
     double lonPos, double lonSpeed, double lonAccel,
-    double maxTargetLatPos, double targetLatSpeed, std::vector<double> targetLonPoses, double convergenceTime) {
+    double maxTargetLatPos, double targetLatSpeed, double maxTargetLatSpeed, 
+    std::vector<double> targetLonPoses, double convergenceTime) {
     
     std::vector<FrenetPath> pathCandidates;
     
@@ -55,7 +56,7 @@ std::vector<FrenetPath> FrenetPlanning::generateMaxPosPathCandidates(double latP
             FrenetPath fp(latTrajectory, lonTrajectory);
 
             // 縦方向の目標位置と実際の終端位置の差分自乗をコストに加算
-            fp.calculateCost(convergenceTime, targetLatPos, targetLatSpeed);
+            fp.calculateCost(convergenceTime, targetLatPos, maxTargetLatSpeed);
             pathCandidates.emplace_back(fp);
         }
     }

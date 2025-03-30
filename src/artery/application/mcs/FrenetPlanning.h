@@ -43,12 +43,14 @@ public:
         * @param lonAccel [double] 現在の横方向の加速度 [m/s^2] 
         * @param maxTargetLatPos [double] 最大の目標の位置 [m]
         * @param targetLatSpeed [double]   目標の縦方向の速度 [m/s]
+        * @param maxTargetLatSpeed [double] 目標の縦方向の速度の最大値 [m/s] コスト計算で使用
         * @param targetLonPoses [vector<double>]  目標の横方向の位置 [m] 
         * @param convergenceTime [double] 収束時間 [s] 
     */
     std::vector<FrenetPath> generateMaxPosPathCandidates(double latPos, double latSpeed, double latAccel, 
         double lonPos, double lonSpeed, double lonAccel, 
-        double maxTargetLatPos, double targetLatSpeed, std::vector<double> targetLonPoses, double convergenceTime);
+        double maxTargetLatPos, double targetLatSpeed, double maxTargetLatSpeed,
+        std::vector<double> targetLonPoses, double convergenceTime);
     
     /*
         * コストが最小の経路を選択
