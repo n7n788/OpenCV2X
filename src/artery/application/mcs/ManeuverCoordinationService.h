@@ -119,6 +119,7 @@ private:
     // 設定パラメータ
     double mMaxSpeed; //> 最大速度
     double mLaneWidth; //> レーン幅
+    int mNumLanes; //> レーン数
     std::vector<double> mAvailableLanes; //> 利用可能なレーン位置
     double mVehicleLength; //> 車両の長さ
     double mSafetyDistance; //> 安全距離
