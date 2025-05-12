@@ -16,7 +16,7 @@ public:
 		mLonTrajectory = lonTrajectory;
 	}
 
-	FrenetPath() {}
+	FrenetPath() { mCost = -1.0; }
 
 	static constexpr double K_JERK = 0.1; // ジャークの重み
 	static constexpr double K_TIME = 1.0; // 時間の重み

@@ -68,12 +68,11 @@ private:
     bool checkCollision(const FrenetPath& path1, const FrenetPath& path2);
     
     /*
-     * 通行権の優先度を比較
-     * @param id1 車両ID1
-     * @param id2 車両ID2
-     * @return id1の方が優先度が高い場合true
+     * senderIdの通行権が自分より優先かどうかを判定
+     * @param senderId 車両ID
+     * @return senderIdの方が優先度が高い場合true
      */
-    bool hasPriority(const std::string& id1, const std::string& id2);
+    bool hasPriority(const std::string& senderId, const FrenetPath& path);
     
     /*
      * 受信した経路を受け入れるかどうかの判定
@@ -95,6 +94,13 @@ private:
      * @param targetLane 目標レーン番号
      */
     void changeLane(traci::VehicleController* controller, int targetLane);
+
+    /*
+     * 車両が障害物かどうかを判定
+     * @return 障害物の場合true
+     * @note 車両IDが"obstacle"で始まる場合、障害物とみなす
+    */
+    bool isObstacle(const std::string&) const;
  
     void finish() override;
 
@@ -122,17 +128,21 @@ private:
     int mNumLanes; //> レーン数
     std::vector<double> mAvailableLanes; //> 利用可能なレーン位置
     double mVehicleLength; //> 車両の長さ
-    double mSafetyDistance; //> 安全距離
+    double mSafetySecond = 2.0; //> 安全距離
     double mConvTime; //> 収束時間
     
     // 車両データプロバイダ
     const VehicleDataProvider* mVehicleDataProvider = nullptr;
+    traci::VehicleController* mVehicleController = nullptr;
     bool mEnableVisualization = false;
     double mLastUpdateTime = 0.0; //> 最後に更新した時間
   
     bool mLaneChangeInProgress = false; //> 車線変更中フラグ
     int mTargetLane = -1; //> 目標レーン
     double mLaneChangeStartTime = 0.0; //> 車線変更開始時間
+
+    double mDesiredCostThreshold = 100.0; //> 希望経路のコストが予定経路のコストをこの閾値以下で下回る場合に、希望経路を生成
+    const std::string mObstacle = "obstacle"; //> 障害物のID
 };
 
 } // namespace artery
