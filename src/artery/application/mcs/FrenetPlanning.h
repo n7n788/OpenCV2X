@@ -10,12 +10,9 @@ namespace artery
 class FrenetPlanning
 {
 public:
-    /*
-        * コンストラクタ 
-    */
     FrenetPlanning();
 
-    /*
+    /**
         * 縦方向の最高速度を指定し、各レーンにおける経路の候補を生成 
         *  目標位置は自由
         * @param latPos [double]   現在の縦方向の位置 [m] 
@@ -32,7 +29,7 @@ public:
         double lonPos, double lonSpeed, double lonAccel, 
         double maxTargetLatSpeed, std::vector<double> targetLonPoses, double convergenceTime);
     
-    /*
+    /**
         * 各レーンで縦方向の位置と速度を指定し、経路の候補を生成 
         * @param latPos [double]   現在の縦方向の位置 [m] 
         * @param latSpeed [double] 現在の縦方向の速度 [m/s]
@@ -51,7 +48,7 @@ public:
         std::vector<double> targetLatPoses, std::vector<double> targetLatSpeeds, double maxTargetLatSpeed,
         std::vector<double> targetLonPoses, double convergenceTime);
 
-    /*
+    /**
         * ある速度に到達する直進経路を生成
         * @param latPos [double]   現在の縦方向の位置 [m]
         * @param latSpeed [double] 現在の縦方向の速度 [m/s]

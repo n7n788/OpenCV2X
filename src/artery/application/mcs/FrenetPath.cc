@@ -1,10 +1,6 @@
-
-#include "QuarticPolynomial.h"
-#include "QuinticPolynomial.h"
 #include "Trajectory.h"
 #include "FrenetPath.h"
 #include <vector>
-#include <iostream>
 
 namespace artery
 {
@@ -43,6 +39,9 @@ void FrenetPath::calculateCost(double convergenceTime, double targetLatPos, doub
 // 実行方法
 // mcsディレクトリ下で $g++ -DFRENETPATH_TEST FrenetPath.cc Trajectory.cc QuinticPolynomial.cc QuarticPolynomial.cc
 #ifdef FRENETPATH_TEST
+#include <iostream>
+#include "QuarticPolynomial.h"
+#include "QuinticPolynomial.h"
 int main() {
     double targetLatSpeed = 5.0;
     double convergenceTime = 5.0;

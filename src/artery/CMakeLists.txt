@@ -10,8 +10,8 @@ add_library(core SHARED
     application/mcs/FrenetPlanning.cc
     application/mcs/ManeuverCoordinationMessage.cc
     application/mcs/ManeuverCoordinationService.cc
-    application/mcs/QuarticPolynomial.cc
-    application/mcs/QuinticPolynomial.cc
+    application/mcs/FourthDegreePolynomial.cc
+    application/mcs/FifthDegreePolynomial.cc
     application/mcs/Trajectory.cc
     application/mcs/MCMWebVisualizer.cc
     application/ExampleService.cc

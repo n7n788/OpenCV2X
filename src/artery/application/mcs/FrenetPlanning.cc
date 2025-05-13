@@ -1,8 +1,9 @@
 #include "FrenetPlanning.h"
 #include "FrenetPath.h"
 #include "Trajectory.h"
-#include "QuinticPolynomial.h"
-#include "QuarticPolynomial.h"
+#include "Polynomial.h"
+#include "FourthDegreePolynomial.h"
+#include "FifthDegreePolynomial.h"
 #include <vector>
 #include <iostream>
 
@@ -19,13 +20,13 @@ std::vector<FrenetPath> FrenetPlanning::generateMaxSpeedPathCandidates(double la
     // 横方向の目標位置を全探索
     for (double targetLonPos: targetLonPoses) {
         // 目標位置に達する横方向の経路を５次元方程式から生成
-        Trajectory lonTrajectory(QuinticPolynomial(lonPos, lonSpeed, lonAccel, targetLonPos, 0.0, 0.0, convergenceTime), convergenceTime);
+        Trajectory lonTrajectory(FifthDegreePolynomial(lonPos, lonSpeed, lonAccel, targetLonPos, 0.0, 0.0, convergenceTime), convergenceTime);
 
         // 縦方向の目標速度を、0から最大値まで全探索
         const double SPEED_STEP = 1.0;
         for (double targetLatSpeed = 0.0; targetLatSpeed <= maxTargetLatSpeed; targetLatSpeed += SPEED_STEP) {
             // 目標速度に達する縦方向の経路を４次元方程式から生成
-            Trajectory latTrajectory(QuarticPolynomial(latPos, latSpeed, latAccel, targetLatSpeed, 0.0, convergenceTime), convergenceTime);
+            Trajectory latTrajectory(FourthDegreePolynomial(latPos, latSpeed, latAccel, targetLatSpeed, 0.0, convergenceTime), convergenceTime);
             FrenetPath fp(latTrajectory, lonTrajectory); 
 
             // 縦方向の目標速度と実際の終端速度の差分自乗をコストに加算
@@ -52,10 +53,10 @@ std::vector<FrenetPath> FrenetPlanning::generateMaxPosPathCandidates(double latP
         double targetLonPos = targetLonPoses.at(i);
 
         // 横方向の経路を5次元方程式から生成
-        Trajectory lonTrajectory(QuinticPolynomial(lonPos, lonSpeed, lonAccel, targetLonPos, 0.0, 0.0, convergenceTime), convergenceTime);
+        Trajectory lonTrajectory(FifthDegreePolynomial(lonPos, lonSpeed, lonAccel, targetLonPos, 0.0, 0.0, convergenceTime), convergenceTime);
 
         // 縦方向の目標位置と速度に達する経路を5次元方程式から生成
-        Trajectory latTrajectory(QuinticPolynomial(latPos, latSpeed, latAccel, targetLatPos, targetLatSpeed, 0.0, convergenceTime), convergenceTime);
+        Trajectory latTrajectory(FifthDegreePolynomial(latPos, latSpeed, latAccel, targetLatPos, targetLatSpeed, 0.0, convergenceTime), convergenceTime);
     
         // 縦方向の目標位置と実際の終端位置の差分自乗をコストに加算
         FrenetPath fp(latTrajectory, lonTrajectory);
@@ -70,9 +71,9 @@ FrenetPath FrenetPlanning::generateSpeedPath(double latPos, double latSpeed, dou
     double lonPos, double lonSpeed, double lonAccel, double targetSpeed, double convergenceTime) {
     
     // 横方向の経路 (直進のみを) 5次元方程式から生成
-    Trajectory lonTrajectory(QuinticPolynomial(lonPos, lonSpeed, lonAccel, lonPos, 0.0, 0.0, convergenceTime), convergenceTime);
+    Trajectory lonTrajectory(FifthDegreePolynomial(lonPos, lonSpeed, lonAccel, lonPos, 0.0, 0.0, convergenceTime), convergenceTime);
     // 縦方向の経路を4次元方程式から生成
-    Trajectory latTrajectory(QuarticPolynomial(latPos, latSpeed, latAccel, targetSpeed, 0.0, convergenceTime), convergenceTime);
+    Trajectory latTrajectory(FourthDegreePolynomial(latPos, latSpeed, latAccel, targetSpeed, 0.0, convergenceTime), convergenceTime);
     
     FrenetPath fp(latTrajectory, lonTrajectory);
     
@@ -111,14 +112,6 @@ void testGenerateMaxSpeedPathConditions() {
             "m, End lon speed: " << path.getLatTrajectory().getSpeeds().back() <<
             "m/s, Cost: " << path.getCost() << std::endl;
     }
-
-    artery::FrenetPath minCostPath = fp.selectMinCostPath(freePathCandidates);
-    std::cout << "Min cost path" << std::endl;
-    std::cout << "End lat pos: " << minCostPath.getLatTrajectory().getPoses().back() << 
-        "m, End lat speed: " << minCostPath.getLatTrajectory().getSpeeds().back() << 
-        "m/s, End lon pos: " << minCostPath.getLonTrajectory().getPoses().back() <<
-        "m, End lat speed: " << minCostPath.getLatTrajectory().getSpeeds().back() <<
-        "m/s, Cost: " << minCostPath.getCost() << std::endl;
 }
 
 void testGenerateMaxPosPathConditions() {
@@ -129,15 +122,17 @@ void testGenerateMaxPosPathConditions() {
     double lonPos = 0.0;
     double lonSpeed = 0.0;
     double lonAccel = 0.0;
-    double maxTargetLatPos = 20;
-    double targetLatSpeed = 5.0;
+    std::vector<double> maxTargetLatPoses = {20};
+    std::vector<double> targetLatSpeeds = {5.0};
+    double maxTargetLatSpeed = 5.0;
     std::vector<double> targetLonPoses = {5.0};
     double convergenceTime = 5.0;
 
     const std::vector<artery::FrenetPath> followingPathCandidates = fp.generateMaxPosPathCandidates(
         latPos, latSpeed, latAccel, 
         lonPos, lonSpeed, lonAccel, 
-        maxTargetLatPos, targetLatSpeed, targetLonPoses, convergenceTime
+        maxTargetLatPoses, targetLatSpeeds, maxTargetLatSpeed, 
+        targetLonPoses, convergenceTime
     );
 
     std::cout << "max pos path candidates " << std::endl;
@@ -148,14 +143,6 @@ void testGenerateMaxPosPathConditions() {
             "m, End lon speed: " << path.getLonTrajectory().getSpeeds().back() <<
             "m/s, Cost: " << path.getCost() << std::endl;
     }
-    
-    artery::FrenetPath minCostPath = fp.selectMinCostPath(followingPathCandidates);
-    std::cout << "Min cost path" << std::endl;
-    std::cout << "End lat pos: " << minCostPath.getLatTrajectory().getPoses().back() << 
-        "m, End lat speed: " << minCostPath.getLatTrajectory().getPoses().back() << 
-        "m/s, End lon pos: " << minCostPath.getLonTrajectory().getPoses().back() <<
-        "m, End lon speed: " << minCostPath.getLonTrajectory().getSpeeds().back() <<
-        "m/s, Cost: " << minCostPath.getCost() << std::endl;
 }
 
 int main() {

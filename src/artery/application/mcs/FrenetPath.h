@@ -9,8 +9,10 @@ namespace artery
 class FrenetPath
 {
 public:
-	// @param latTrajectory [Trajectory] 縦方向の経路
-	// @param lonTrajectory [Trajectory] 横方向の経路
+	/**
+	 * @param latTrajectory [Trajectory] 縦方向の経路
+	 * @param lonTrajectory [Trajectory] 横方向の経路
+	*/
 	FrenetPath(const Trajectory& latTrajectory, const Trajectory& lonTrajectory) {
 		mLatTrajectory = latTrajectory;
 		mLonTrajectory = lonTrajectory;

@@ -1,6 +1,10 @@
 #ifndef FIFTH_DEGREE_POLYNOMIAL_H
 #define FIFTH_DEGREE_POLYNOMIAL_H
 
+#include "Polynomial.h"
+#include <Eigen/Dense>
+#include <cmath>
+
 namespace artery {
 
 /**
@@ -9,7 +13,7 @@ namespace artery {
  * 始点と終点それぞれで位置・速度・加速度を与え，
  * 区間長 @p duration で滑らかな 5 次曲線を生成する。
  */
-class FifthDegreePolynomial
+class FifthDegreePolynomial : public Polynomial 
 {
 public:
     /**

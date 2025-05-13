@@ -1,22 +1,18 @@
 #include "Trajectory.h"
 #include "Polynomial.h"
-#include "QuinticPolynomial.h"
-#include "QuarticPolynomial.h"
 #include <vector>
-#include <iostream>
 
 namespace artery
 {
 
-Trajectory::Trajectory(const artery::Polynomial& p, double timeLength) {
-	mTimeLength = timeLength;
+Trajectory::Trajectory(const artery::Polynomial& p, double duration) {
+	mDuration = duration;
 	// 位置を追加
-	for (double t = 0.0; t < mTimeLength; t += TIME_STEP) {
-		double speed = p.calc_first_derivative(t);
-		mPoses.emplace_back(p.calc_point(t));
-		mSpeeds.emplace_back(p.calc_first_derivative(t));
-		mAccels.emplace_back(p.calc_second_derivative(t));
-		mJerks.emplace_back(p.calc_third_derivative(t));
+	for (double t = 0.0; t < mDuration; t += TIME_STEP) {
+		mPoses.emplace_back(p.calc_x(t));
+		mSpeeds.emplace_back(p.calc_v(t));
+		mAccels.emplace_back(p.calc_a(t));
+		mJerks.emplace_back(p.calc_j(t));
 	}
 }
 
@@ -24,27 +20,37 @@ Trajectory::Trajectory(const artery::Polynomial& p, double timeLength) {
 
 // ユニットテスト
 // 実行方法
-// mcsディレクトリ下で $g++ -DTRAJECTORY_TEST Trajectory.cc QuinticPolynomial.cc QuarticPolynomial.cc
+// mcsディレクトリ下で $g++ -DTRAJECTORY_TEST Trajectory.cc FourthDegreePolynomial.cc FifthDegreePolynomial.cc
 #ifdef TRAJECTORY_TEST
+#include "FourthDegreePolynomial.h"
+#include "FifthDegreePolynomial.h"
+#include <iostream>
 int main() {
-	artery::QuinticPolynomial qp1(0.0, 0.0, 0.0, 10.0, 0.0, 0.0, 5.0);
-	artery::QuarticPolynomial qp2(0.0, 0.0, 0.0, 2.0, 0.0, 5.0);
+	double xInit = 0.0;
+	double vInit = 0.0;
+	double aInit = 0.0;
+	double xFinal = 10.0;
+	double vFinal = 10.0;
+	double aFinal = 0.0;
+	double duration = 5.0;
+	artery::FourthDegreePolynomial fourthP(xInit, vInit, aInit, vFinal, aFinal, duration);
+	artery::FifthDegreePolynomial fifthP(xInit, vInit, aInit, xFinal, vFinal, aFinal, duration);
 
-	artery::Trajectory tj1(qp1);
-	artery::Trajectory tj2(qp2);
+	artery::Trajectory fourthT(fourthP, duration);
+	artery::Trajectory fifthT(fifthP, duration);
 
-	for (int i = 0; i < tj1.getPoses().size(); i++) {
-		std::cout << "pos: " << tj1.getPoses().at(i) << " "
-				  << "speed: " << tj1.getSpeeds().at(i) << " "
-				  << "accel: " << tj1.getAccels().at(i) << " "
-				  << "jerk: " << tj1.getJerks().at(i) << std::endl;
+	for (int i = 0; i < fourthT.getPoses().size(); i++) {
+		std::cout << "pos: " << fourthT.getPoses().at(i) << " "
+				  << "speed: " << fourthT.getSpeeds().at(i) << " "
+				  << "accel: " << fourthT.getAccels().at(i) << " "
+				  << "jerk: " << fourthT.getJerks().at(i) << std::endl;
 	}
 
-	for (int i = 0; i < tj2.getPoses().size(); i++) {
-		std::cout << "pos: " << tj2.getPoses().at(i) << " "
-				  << "speed: " << tj2.getSpeeds().at(i) << " "
-				  << "accel: " << tj2.getAccels().at(i) << " "
-				  << "jerk: " << tj2.getJerks().at(i) << std::endl;
+	for (int i = 0; i < fifthT.getPoses().size(); i++) {
+		std::cout << "pos: " << fifthT.getPoses().at(i) << " "
+				  << "speed: " << fifthT.getSpeeds().at(i) << " "
+				  << "accel: " << fifthT.getAccels().at(i) << " "
+				  << "jerk: " << fifthT.getJerks().at(i) << std::endl;
 	}
 }
 #endif

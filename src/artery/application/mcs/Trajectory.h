@@ -7,17 +7,21 @@
 namespace artery
 {
 
-// 1次元の軌跡情報を格納するクラス
+/**
+ * @brief 軌跡
+ * 
+ * n次多項式を受け取り、各タイムステップにおける位置、速度、加速度、ジャークを計算するクラス
+*/
 class Trajectory
 {
 public:
 
-	// デフォルトコンストラクタ
 	Trajectory() {}
 
-	// コンストラクタ
-    // @param p [Polynomial] n次元方程式
-	Trajectory(const Polynomial& p, double timeLength);
+    /**
+	 *  @param p [Polynomial] n次元方程式
+	 */
+	Trajectory(const Polynomial& p, double duration);
 
 	static constexpr double TIME_STEP = 0.1; // 軌跡のタイムステップ [s]
 
@@ -28,7 +32,7 @@ public:
 	const std::vector<double>& getJerks() const { return mJerks; };
 private:
 	// TIME_STEP間隔で軌跡情報を生成
-	double mTimeLength; // 軌跡の長さ [s]
+	double mDuration; // 軌跡の長さ [s]
 	std::vector<double> mPoses; // 位置配列 [m]
 	std::vector<double> mSpeeds; // 速度配列 [m/s]
 	std::vector<double> mAccels; // 加速度配列 [m/s^2]
