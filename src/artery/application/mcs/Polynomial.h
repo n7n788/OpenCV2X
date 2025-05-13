@@ -7,10 +7,10 @@ namespace artery
 class Polynomial
 {
 public:
-    virtual double calc_point(double t) const = 0;
-    virtual double calc_first_derivative(double t) const = 0;
-    virtual double calc_second_derivative(double t) const = 0;
-    virtual double calc_third_derivative(double t) const = 0;
+    virtual double calc_x(double t) const = 0;
+    virtual double calc_v(double t) const = 0;
+    virtual double calc_a(double t) const = 0;
+    virtual double calc_j(double t) const = 0;
 };
 }
 #endif // POLYNOMIAL_H
