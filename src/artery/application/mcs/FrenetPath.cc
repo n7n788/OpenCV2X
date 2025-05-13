@@ -28,12 +28,12 @@ void FrenetPath::calculateCost(double convergenceTime, double targetLatPos, doub
 
     // 縦方向のコスト = ジャークの二乗和 + 収束時間 + 目標位置との差分自乗 + 目標スピードとの差分自乗
     latCost = K_JERK * latJerkSquareSum + 
-              K_TIME * convergenceTime + 
-              K_DISTANCE * latDiffPos * latDiffPos +
               K_SPEED * latDiffSpeed * latDiffSpeed;
+            //   K_TIME * (5.0 - convergenceTime) + 
+            //   K_DISTANCE * latDiffPos * latDiffPos +
     // 横方向のコスト = ジャークの二乗和 + 収束時間 + センターラインまでの距離の二乗
-    lonCost = K_JERK * lonJerkSquareSum + 
-              K_TIME * convergenceTime;
+    lonCost = K_JERK * lonJerkSquareSum;
+            //   K_TIME * convergenceTime;
             //   K_DISTANCE * mLonTrajectory.getPoses().back() * mLonTrajectory.getPoses().back(); 
     mCost = K_LAT * latCost + K_LON * lonCost;
 }

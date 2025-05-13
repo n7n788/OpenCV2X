@@ -43,7 +43,6 @@ void ManeuverCoordinationService::initialize(int stage)
         ItsG5Service::initialize();
         
         // パラメータの読み込み
-        mMaxSpeed = par("maxSpeed").doubleValue();
         mLaneWidth = par("laneWidth").doubleValue();
         mVehicleLength = par("vehicleLength").doubleValue();
         mConvTime = par("convergenceTime").doubleValue();
@@ -51,7 +50,7 @@ void ManeuverCoordinationService::initialize(int stage)
         // 利用可能なレーン位置の設定
         mNumLanes = par("numLanes").intValue();
         for (int i = 0; i < mNumLanes; i++) {
-            mAvailableLanes.push_back(i * mLaneWidth);
+            mCenterLanes.push_back(i * mLaneWidth + mLaneWidth / 2.0);
         }
         
         // トリガーメッセージの作成
@@ -120,16 +119,13 @@ void ManeuverCoordinationService::trigger()
             double targetLonPos = lonPoses.back();
             int targetLane = static_cast<int>((mLaneWidth * mNumLanes - targetLonPos) / mLaneWidth);
 
-            api.vehicle().changeLane(
-                mTraciId,
-                targetLane,
-                mConvTime
-            );
             // 現在のレーンと目標レーンが異なる場合、ステータスを変更して車線変更を開始
             if (!mLaneChangeInProgress && currentLane != targetLane) {
-                EV_INFO << "Vehicle " << mTraciId << " changing lane from " 
-                        << currentLane << " to " << targetLane 
-                        << " over " << mConvTime << " seconds\n";
+                api.vehicle().changeLane(
+                    mTraciId,
+                    targetLane,
+                    mConvTime
+                );
                 std::cout << "Vehicle " << mTraciId << " changing lane from " 
                         << currentLane << " to " << targetLane 
                         << " over " << mConvTime << " seconds\n";
@@ -140,33 +136,43 @@ void ManeuverCoordinationService::trigger()
                 mLaneChangeStartTime = omnetpp::simTime().dbl();
             }
             
-            // 車線変更の進行状況をチェック
+            // // 車線変更の進行状況をチェック
             if (mLaneChangeInProgress) {
                 double elapsedTime = omnetpp::simTime().dbl() - mLaneChangeStartTime;
                 
                 // 車線変更が完了したかチェック（時間経過または目標レーンに到達）
                 if (elapsedTime >= mConvTime || currentLane == mTargetLane) {
                     mLaneChangeInProgress = false;
-                    EV_INFO << "Vehicle " << mTraciId << " lane change completed\n";
-                    std::cout << "Vehicle " << mTraciId << " lane change completed\n";
+                    mLastLaneChangeTime = omnetpp::simTime().dbl();
+                    std::cout << "Vehicle " << mTraciId << " completed lane change to " 
+                              << mTargetLane << " time: " << mLastLaneChangeTime << "\n";
                 }
             }
+
         }
         
         // 縦方向の速度を設定（軌跡から適切な速度を計算）
         const auto& latSpeeds = plannedPath.getLatTrajectory().getSpeeds();
         if (!latSpeeds.empty()) {
             // 目標速度を設定（急激な速度変化を避けるため徐々に調整）
-            int index = 5;
+            int index = 1;
             if (index < static_cast<int>(latSpeeds.size())) {
                 double targetSpeed = latSpeeds[index];
                 double currentSpeed = mVehicleDataProvider->speed().value();
-                
+                double adjustedSpeed;
+
+                // 急激な速度変化を避けるため、現在の速度と目標速度の差を制限
+                // double maxSpeedDiff = 0.3; // 最大速度差
+                // if (currentSpeed > targetSpeed) {
+                //     // 減速する場合
+                //     adjustedSpeed = currentSpeed - std::min(currentSpeed - targetSpeed, maxSpeedDiff);
+                // } else {
+                //     // 加速する場合
+                //     adjustedSpeed = currentSpeed + std::min(targetSpeed - currentSpeed, maxSpeedDiff);  
+                // }
+
                 // 速度を設定
                 mVehicleController->setSpeed(targetSpeed * boost::units::si::meter_per_second);
-                
-                std::cout << "Vehicle " << mTraciId << ", current speed: " << currentSpeed <<
-                        " m/s, target speed: " << targetSpeed << " m/s\n";
             }
         }
         // 最終更新時間を記録
@@ -187,20 +193,26 @@ ManeuverCoordinationMessage* ManeuverCoordinationService::generate()
     double lonPos = mVehicleDataProvider->position().y.value();
     double lonSpeed = 0.0; // 横方向の速度は通常0に近い
     double lonAccel = 0.0; // 横方向の加速度も通常0に近い
-   
-    double maxSpeed = mMaxSpeed;
-    auto vehicleController = getFacilities().get_mutable_ptr<traci::VehicleController>();
-    if (vehicleController) maxSpeed = vehicleController->getVehicleType().getMaxSpeed().value();
+    double maxSpeed = mVehicleController->getMaxSpeed().value();
 
     // 候補経路を計算
     std::vector<FrenetPath> pathCandidates;
-    
-    // レーン中央位置を計算
+    // 到達可能なレーン中央位置を計算
     std::vector<double> laneCenterPositions;
-    for (double lanePos : mAvailableLanes) {
-        // レーンの中央位置 = レーンの左端 + レーン幅の半分
-        double laneCenterPos = lanePos + (mLaneWidth / 2.0);
-        laneCenterPositions.push_back(laneCenterPos);
+
+    // 車線変更後にインターバル経過した場合、車線変更を許して候補経路を生成する 
+    if (mLastLaneChangeTime < mLaneChangeInterval || omnetpp::simTime().dbl() - mLastLaneChangeTime > mLaneChangeInterval) {
+        for (double l : mCenterLanes) {
+            if (abs(l - lonPos) < mLaneWidth / 2.0 || 
+                abs(l - lonPos - mLaneWidth) < mLaneWidth / 2.0 || 
+                abs(l - lonPos + mLaneWidth) < mLaneWidth / 2.0) {
+                // 車線変更可能な場合、レーン中央位置を追加
+                laneCenterPositions.push_back(l);
+            }
+        }
+    } else {
+        // 車線変更不可
+        laneCenterPositions.push_back(lonPos); 
     }
     
     // 全レーンに対して、最高速度に達する候補経路を生成（レーン中央位置を使用）
@@ -238,6 +250,7 @@ ManeuverCoordinationMessage* ManeuverCoordinationService::generate()
     );
     pathCandidates.insert(pathCandidates.end(), posPathCandidates.begin(), posPathCandidates.end());
 
+
     // 受信した希望経路との衝突チェックと交渉受け入れ
     for (const auto& entry : mReceivedDesiredPaths) {
         const std::string& senderId = entry.first;
@@ -251,12 +264,6 @@ ManeuverCoordinationMessage* ManeuverCoordinationService::generate()
             }
         }
     }
-
-    // std::cout << "Vehicle " << mTraciId << " accepted IDs: ";
-    // for (const auto& id : mAcceptedIds) {
-    //     std::cout << id << " ";
-    // }
-    // std::cout << std::endl;
     
     // 最適な予定経路と希望経路の選択
     FrenetPath plannedPath = FrenetPath();
@@ -329,14 +336,15 @@ ManeuverCoordinationMessage* ManeuverCoordinationService::generate()
         }
     }
 
-    if (mTraciId == "0.0") {
-        std::cout << "Vehicle " << mTraciId << " selected planned path with cost: " << plannedPath.getCost() << std::endl;
-        std::cout << "Vehicle " << mTraciId << " selected desired path with cost: " << desiredPath.getCost() << std::endl;
-    } 
-
     // 希望経路と予定経路のコスト差分が閾値未満である場合、希望経路を送信しない
     if (plannedPath.getCost() - desiredPath.getCost() < mDesiredCostThreshold) {
         desiredPath = FrenetPath(); // 希望経路を空にする
+    }
+
+    // 予定経路がない場合、等速で移動する経路を使用 
+    // TO DO 修正したい
+    if (plannedPath.getCost() < 0) {
+        plannedPath = mPlanner.generateSpeedPath(latPos, latSpeed, latAccel, lonPos, lonSpeed, lonAccel, latSpeed, mConvTime); 
     }
 
     // MCMの作成
@@ -359,6 +367,7 @@ ManeuverCoordinationMessage* ManeuverCoordinationService::generate()
     mDesiredPaths.push_back(desiredPath);
     mPreviousPlannedPath = plannedPath;
     mPreviousDesiredPath = desiredPath;
+    mLastGenerateMcmTime = omnetpp::simTime().dbl();
     
     // 可視化を更新
     if (mEnableVisualization) {
@@ -480,7 +489,7 @@ bool ManeuverCoordinationService::acceptPath(const std::string& senderId, const 
     // 経路受け入れ判定ロジック
     // 30%の確率で受け入れる
     // return rand() % 10 < 3;
-    std::cout << "Vehicle " << mTraciId << " accepted path from " << senderId << std::endl;
+    // std::cout << "Vehicle " << mTraciId << " accepted path from " << senderId << std::endl;
     return true;
 }
 
@@ -504,8 +513,10 @@ double ManeuverCoordinationService::getLeadingVehiclePosition(double laneCenterP
         // 同一レーン上の車両かチェック（レーン中央位置との距離で判定）
         if (std::abs(pos.second - laneCenterPosition) <= LANE_THRESHOLD) {
             // 前方にある車両かチェック
+            double mySpeed = mVehicleDataProvider->speed().value();
+            double safetyMargin = mVehicleLength / 2 + mSafetySecond * mySpeed;
             double distance = pos.first - mVehicleDataProvider->position().x.value();
-            if (distance > 0 && distance < minDistance) {
+            if (distance > safetyMargin && distance < minDistance) {
                 minDistance = distance;
                 leadingVehiclePos = pos.first;
             }

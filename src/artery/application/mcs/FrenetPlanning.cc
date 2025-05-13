@@ -14,18 +14,18 @@ FrenetPlanning::FrenetPlanning() {}
 std::vector<FrenetPath> FrenetPlanning::generateMaxSpeedPathCandidates(double latPos, double latSpeed, double latAccel,
     double lonPos, double lonSpeed, double lonAccel,
     double maxTargetLatSpeed, std::vector<double> targetLonPoses, double convergenceTime) {
-    
+
     std::vector<FrenetPath> pathCandidates;
     // 横方向の目標位置を全探索
     for (double targetLonPos: targetLonPoses) {
         // 目標位置に達する横方向の経路を５次元方程式から生成
-        Trajectory lonTrajectory(QuinticPolynomial(lonPos, lonSpeed, lonAccel, targetLonPos, 0.0, 0.0, convergenceTime));
+        Trajectory lonTrajectory(QuinticPolynomial(lonPos, lonSpeed, lonAccel, targetLonPos, 0.0, 0.0, convergenceTime), convergenceTime);
 
         // 縦方向の目標速度を、0から最大値まで全探索
-        const double SPEED_STEP = 3.0;
+        const double SPEED_STEP = 1.0;
         for (double targetLatSpeed = 0.0; targetLatSpeed <= maxTargetLatSpeed; targetLatSpeed += SPEED_STEP) {
             // 目標速度に達する縦方向の経路を４次元方程式から生成
-            Trajectory latTrajectory(QuarticPolynomial(latPos, latSpeed, latAccel, targetLatSpeed, 0.0, convergenceTime));
+            Trajectory latTrajectory(QuarticPolynomial(latPos, latSpeed, latAccel, targetLatSpeed, 0.0, convergenceTime), convergenceTime);
             FrenetPath fp(latTrajectory, lonTrajectory); 
 
             // 縦方向の目標速度と実際の終端速度の差分自乗をコストに加算
@@ -44,6 +44,7 @@ std::vector<FrenetPath> FrenetPlanning::generateMaxPosPathCandidates(double latP
     
     std::vector<FrenetPath> pathCandidates;
     std::size_t n = std::min({targetLatPoses.size(), targetLatSpeeds.size(), targetLonPoses.size()});
+    
     // 横方向の位置を全探索
     for (std::size_t i = 0; i < n; ++i) {
         double targetLatPos = targetLatPoses.at(i);
@@ -51,10 +52,10 @@ std::vector<FrenetPath> FrenetPlanning::generateMaxPosPathCandidates(double latP
         double targetLonPos = targetLonPoses.at(i);
 
         // 横方向の経路を5次元方程式から生成
-        Trajectory lonTrajectory(QuinticPolynomial(lonPos, lonSpeed, lonAccel, targetLonPos, 0.0, 0.0, convergenceTime));
+        Trajectory lonTrajectory(QuinticPolynomial(lonPos, lonSpeed, lonAccel, targetLonPos, 0.0, 0.0, convergenceTime), convergenceTime);
 
         // 縦方向の目標位置と速度に達する経路を5次元方程式から生成
-        Trajectory latTrajectory(QuinticPolynomial(latPos, latSpeed, latAccel, targetLatPos, targetLatSpeed, 0.0, convergenceTime));
+        Trajectory latTrajectory(QuinticPolynomial(latPos, latSpeed, latAccel, targetLatPos, targetLatSpeed, 0.0, convergenceTime), convergenceTime);
     
         // 縦方向の目標位置と実際の終端位置の差分自乗をコストに加算
         FrenetPath fp(latTrajectory, lonTrajectory);
@@ -64,19 +65,19 @@ std::vector<FrenetPath> FrenetPlanning::generateMaxPosPathCandidates(double latP
 
     return pathCandidates;
 }
+
+FrenetPath FrenetPlanning::generateSpeedPath(double latPos, double latSpeed, double latAccel,
+    double lonPos, double lonSpeed, double lonAccel, double targetSpeed, double convergenceTime) {
+    
+    // 横方向の経路 (直進のみを) 5次元方程式から生成
+    Trajectory lonTrajectory(QuinticPolynomial(lonPos, lonSpeed, lonAccel, lonPos, 0.0, 0.0, convergenceTime), convergenceTime);
+    // 縦方向の経路を4次元方程式から生成
+    Trajectory latTrajectory(QuarticPolynomial(latPos, latSpeed, latAccel, targetSpeed, 0.0, convergenceTime), convergenceTime);
+    
+    FrenetPath fp(latTrajectory, lonTrajectory);
+    
+    return fp;
 }
-
-artery::FrenetPath artery::FrenetPlanning::selectMinCostPath(const std::vector<FrenetPath>& pathCandidates) {
-    double minCost = std::numeric_limits<double>::max();
-
-    FrenetPath minCostPath;
-    for (const FrenetPath& path: pathCandidates) {
-        if (path.getCost() < minCost) {
-            minCost = path.getCost();
-            minCostPath = path;
-        }
-    }
-    return minCostPath;
 }
 
 // ユニットテスト

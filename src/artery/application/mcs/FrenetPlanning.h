@@ -50,12 +50,21 @@ public:
         double lonPos, double lonSpeed, double lonAccel, 
         std::vector<double> targetLatPoses, std::vector<double> targetLatSpeeds, double maxTargetLatSpeed,
         std::vector<double> targetLonPoses, double convergenceTime);
-    
+
     /*
-        * コストが最小の経路を選択
-        @return [FrenetPath] コストが最小の経路
-    */ 
-    FrenetPath selectMinCostPath(const std::vector<FrenetPath>& pathCandidates);
+        * ある速度に到達する直進経路を生成
+        * @param latPos [double]   現在の縦方向の位置 [m]
+        * @param latSpeed [double] 現在の縦方向の速度 [m/s]
+        * @param latAccel double] 現在の縦方向の加速度 [m/s^2] 
+        * @param lonPos [double]   現在の横方向の位置 [m] 
+        * @param lonSpeed [double] 現在の横方向の速度 [m/s] 
+        * @param lonAccel [double] 現在の横方向の加速度 [m/s^2] 
+        * @param targetSpeed [double] 目標の速度 [m/s]
+        * @param convergenceTime [double] 収束時間 [s] 
+    */
+    FrenetPath generateSpeedPath(double latPos, double latSpeed, double latAccel, 
+        double lonPos, double lonSpeed, double lonAccel, double targetSpeed, double convergenceTime);
+
 };
 }
 #endif /* ARTERY_FRENETPLANNING_H */

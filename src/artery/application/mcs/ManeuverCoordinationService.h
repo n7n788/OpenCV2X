@@ -108,6 +108,8 @@ private:
     omnetpp::cMessage* mTrigger = nullptr; //> 送信トリガー
     
     FrenetPlanning mPlanner; //> 経路計画
+    const VehicleDataProvider* mVehicleDataProvider = nullptr;
+    traci::VehicleController* mVehicleController = nullptr;
     
     std::map<std::string, FrenetPath> mReceivedPlannedPaths; //> 受信した予定経路
     std::map<std::string, FrenetPath> mReceivedDesiredPaths; //> 受信した希望経路
@@ -121,26 +123,26 @@ private:
     
     std::vector<FrenetPath> mPlannedPaths; //> 予定経路リスト
     std::vector<FrenetPath> mDesiredPaths; //> 希望経路リスト
+
+    double mLastGenerateMcmTime; //> 最後にMCMを送信した時間
+    double mLastLaneChangeTime; //> 最後にレーン変更した時間
     
-    // 設定パラメータ
-    double mMaxSpeed; //> 最大速度
-    double mLaneWidth; //> レーン幅
-    int mNumLanes; //> レーン数
-    std::vector<double> mAvailableLanes; //> 利用可能なレーン位置
-    double mVehicleLength; //> 車両の長さ
-    double mSafetySecond = 2.0; //> 安全距離
-    double mConvTime; //> 収束時間
-    
-    // 車両データプロバイダ
-    const VehicleDataProvider* mVehicleDataProvider = nullptr;
-    traci::VehicleController* mVehicleController = nullptr;
-    bool mEnableVisualization = false;
-    double mLastUpdateTime = 0.0; //> 最後に更新した時間
-  
     bool mLaneChangeInProgress = false; //> 車線変更中フラグ
     int mTargetLane = -1; //> 目標レーン
     double mLaneChangeStartTime = 0.0; //> 車線変更開始時間
+    double mLastUpdateTime = 0.0; //> 最後に更新した時間
 
+    // 設定パラメータ
+    double mLaneWidth; //> レーン幅
+    int mNumLanes; //> レーン数
+    std::vector<double> mCenterLanes; //> 利用可能なレーン位置
+    double mVehicleLength; //> 車両の長さ
+    double mSafetySecond = 2.0; //> 安全距離
+    double mConvTime; //> 収束時間
+    double mMcmInterval = 1.0; //> MCM送信間隔
+    double mLaneChangeInterval = 5.0; //> 車線変更後のインターバル
+    bool mEnableVisualization = false;
+  
     double mDesiredCostThreshold = 100.0; //> 希望経路のコストが予定経路のコストをこの閾値以下で下回る場合に、希望経路を生成
     const std::string mObstacle = "obstacle"; //> 障害物のID
 };

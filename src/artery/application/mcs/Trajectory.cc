@@ -8,21 +8,14 @@
 namespace artery
 {
 
-Trajectory::Trajectory(const artery::Polynomial& p) {
+Trajectory::Trajectory(const artery::Polynomial& p, double timeLength) {
+	mTimeLength = timeLength;
 	// 位置を追加
-	for (double t = 0.0; t < TIME_LENGTH; t += TIME_STEP) {
+	for (double t = 0.0; t < mTimeLength; t += TIME_STEP) {
+		double speed = p.calc_first_derivative(t);
 		mPoses.emplace_back(p.calc_point(t));
-	}
-	// 速度を追加
-	for (double t = 0.0; t < TIME_LENGTH; t += TIME_STEP) {
 		mSpeeds.emplace_back(p.calc_first_derivative(t));
-	}
-	// 加速度を追加
-	for (double t = 0.0; t < TIME_LENGTH; t += TIME_STEP) {
 		mAccels.emplace_back(p.calc_second_derivative(t));
-	}
-	// ジャーク追加
-	for (double t = 0.0; t < TIME_LENGTH; t += TIME_STEP) {
 		mJerks.emplace_back(p.calc_third_derivative(t));
 	}
 }

@@ -9,7 +9,6 @@ simple ManeuverCoordinationService like ItsG5Service
         double updateInterval @unit(s) = default(0.1s);
         
         // 車両パラメータ
-        double maxSpeed @unit(mps) = default(10.0mps); // 約72km/h
         double vehicleLength @unit(m) = default(5m);
         
         // レーン設定
