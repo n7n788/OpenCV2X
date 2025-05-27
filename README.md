@@ -178,8 +178,17 @@ sequenceDiagram
     MCS->>PG: generateMaxPosPathCandidates()
     PG-->>MCS: 前方車両追従経路候補
     
-    MCS->>MCS: 衝突チェック・優先度判定
-    MCS->>MCS: 最適経路選択
+    Note over MCS: 予定経路の決定
+    MCS->>MCS: 他車両の予定経路との衝突チェック
+    MCS->>MCS: 優先度判定（hasPriority）
+    MCS->>MCS: 受け入れ車両の希望経路との衝突チェック
+    MCS->>MCS: 最小コストの予定経路を選択
+    
+    Note over MCS: 希望経路の決定
+    MCS->>MCS: 受け入れ車両の希望経路との衝突チェック
+    MCS->>MCS: 障害物との衝突チェック
+    MCS->>MCS: 最小コストの希望経路を選択
+    MCS->>MCS: コスト差分が閾値以上か確認
     
     MCS->>MCS: create MCM
     
@@ -247,6 +256,107 @@ sequenceDiagram
     end
     
     PG-->>MCS: pathCandidates
+```
+
+### 4.4 予定経路（Planned Path）決定プロセス
+
+```mermaid
+sequenceDiagram
+    participant MCS as ManeuverCoordinationService
+    participant PC as PathCandidates
+    participant RP as ReceivedPaths
+    participant AI as AcceptedIds
+
+    MCS->>PC: 全経路候補を取得
+    
+    loop 各経路候補
+        MCS->>MCS: isValid = true
+        
+        Note over MCS: 優先度の高い車両との衝突チェック
+        loop 受信した予定経路
+            MCS->>RP: 他車両IDと予定経路を取得
+            MCS->>MCS: hasPriority(otherId, candidatePath)?
+            alt 他車両の優先度が高い
+                MCS->>MCS: checkCollision(candidatePath, otherPath)?
+                alt 衝突あり
+                    MCS->>MCS: isValid = false
+                    MCS->>MCS: break
+                end
+            end
+        end
+        
+        Note over MCS: 受け入れた車両の希望経路との衝突チェック
+        loop 受け入れリストの車両ID
+            MCS->>AI: acceptedIdを取得
+            MCS->>RP: 該当車両の希望経路を取得
+            MCS->>MCS: checkCollision(candidatePath, desiredPath)?
+            alt 衝突あり
+                MCS->>MCS: isValid = false
+                MCS->>MCS: break
+            end
+        end
+        
+        alt isValid == true && cost < minCost
+            MCS->>MCS: minCost = cost
+            MCS->>MCS: plannedPath = candidatePath
+        end
+    end
+    
+    MCS-->>MCS: 選択された予定経路
+```
+
+### 4.5 希望経路（Desired Path）決定プロセス
+
+```mermaid
+sequenceDiagram
+    participant MCS as ManeuverCoordinationService
+    participant PC as PathCandidates
+    participant RP as ReceivedPaths
+    participant AI as AcceptedIds
+
+    MCS->>PC: 全経路候補を取得
+    
+    loop 各経路候補
+        MCS->>MCS: isValid = true
+        
+        Note over MCS: 受け入れた車両の希望経路との衝突チェック
+        loop 受け入れリストの車両ID
+            MCS->>AI: acceptedIdを取得
+            MCS->>RP: 該当車両の希望経路を取得
+            MCS->>MCS: checkCollision(candidatePath, desiredPath)?
+            alt 衝突あり
+                MCS->>MCS: isValid = false
+                MCS->>MCS: break
+            end
+        end
+        
+        Note over MCS: 障害物との衝突チェック
+        loop 受信した予定経路
+            MCS->>RP: 他車両IDと予定経路を取得
+            MCS->>MCS: isObstacle(otherId)?
+            alt 障害物である
+                MCS->>MCS: checkCollision(candidatePath, obstaclePath)?
+                alt 衝突あり
+                    MCS->>MCS: isValid = false
+                    MCS->>MCS: break
+                end
+            end
+        end
+        
+        alt isValid == true && cost < minCost
+            MCS->>MCS: minCost = cost
+            MCS->>MCS: desiredPath = candidatePath
+        end
+    end
+    
+    Note over MCS: コスト差分チェック
+    MCS->>MCS: costDiff = plannedPath.cost - desiredPath.cost
+    alt costDiff < threshold
+        MCS->>MCS: desiredPath = empty
+        Note over MCS: 希望経路を送信しない
+    end
+    
+    MCS-->>MCS: 選択された希望経路
 ```
 
 ## 5. データフロー
