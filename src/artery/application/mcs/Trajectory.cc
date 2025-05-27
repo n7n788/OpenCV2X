@@ -8,13 +8,9 @@ namespace artery
 {
 
 Trajectory::Trajectory(const artery::Polynomial& p, 
-					   double initTime,
 					   double duration) 
-	: mInitTime(initTime),
-	  mDuration(duration)
+	:  mDuration(duration)
 {
-	assert(duration > 0.0 && initTime >= 0.0);
-
 	// emplace_backでメモリの再確保を防ぐため、あらかじめreserveしておく
 	std::size_t nPts = static_cast<std::size_t>(std::ceil(duration / TIME_STEP));
 	mPoses.reserve(nPts);

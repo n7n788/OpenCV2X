@@ -49,12 +49,12 @@ void MCMWebVisualizer::visualizeMCM(const ManeuverCoordinationMessage* mcm) {
     VehiclePathData& data = mVehicleData[vehicleId];
     data.plannedPath = mcm->getPlannedPath();
     data.desiredPath = mcm->getDesiredPath();
-    data.latPos = mcm->getLatPos();
     data.lonPos = mcm->getLonPos();
-    data.latSpeed = mcm->getLatSpeed();
+    data.latPos = mcm->getLatPos();
     data.lonSpeed = mcm->getLonSpeed();
-    data.latAccel = mcm->getLatAccel();
+    data.latSpeed = mcm->getLatSpeed();
     data.lonAccel = mcm->getLonAccel();
+    data.latAccel = mcm->getLatAccel();
     data.lastUpdateTime = omnetpp::simTime().dbl();
     
     // JSONデータをファイルに書き込む
@@ -73,7 +73,7 @@ void MCMWebVisualizer::visualizeMCM(const ManeuverCoordinationMessage* mcm) {
     }
 }
 
-void MCMWebVisualizer::setEgoPaths(const std::string& vehicleId, const FrenetPath& plannedPath, const FrenetPath& desiredPath) {
+void MCMWebVisualizer::setEgoPaths(const std::string& vehicleId, const Path& plannedPath, const Path& desiredPath) {
     // 自車両データを更新
     VehiclePathData& data = mVehicleData[vehicleId];
     data.plannedPath = plannedPath;
@@ -84,7 +84,7 @@ void MCMWebVisualizer::setEgoPaths(const std::string& vehicleId, const FrenetPat
     updateJsonFile();
 }
 
-void MCMWebVisualizer::setPathCandidates(const std::string& vehicleId, const std::vector<FrenetPath>& candidates) {
+void MCMWebVisualizer::setPathCandidates(const std::string& vehicleId, const std::vector<Path>& candidates) {
     // 候補経路を更新
     VehiclePathData& data = mVehicleData[vehicleId];
     data.pathCandidates = candidates;
@@ -104,16 +104,16 @@ void MCMWebVisualizer::close() {
     std::cout << "MCMWebVisualizer closed" << std::endl;
 }
 
-std::string MCMWebVisualizer::pathToJson(const FrenetPath& path) {
+std::string MCMWebVisualizer::pathToJson(const Path& path) {
     std::ostringstream json;
     json << "[";
     
-    const auto& latTrajectory = path.getLatTrajectory().getPoses();
     const auto& lonTrajectory = path.getLonTrajectory().getPoses();
+    const auto& latTrajectory = path.getLatTrajectory().getPoses();
     
-    size_t size = std::min(latTrajectory.size(), lonTrajectory.size());
+    size_t size = std::min(lonTrajectory.size(), latTrajectory.size());
     for (size_t i = 0; i < size; ++i) {
-        json << "{\"x\":" << latTrajectory[i] << ",\"y\":" << lonTrajectory[i] << "}";
+        json << "{\"x\":" << lonTrajectory[i] << ",\"y\":" << latTrajectory[i] << "}";
         if (i < size - 1) json << ",";
     }
     
@@ -121,7 +121,7 @@ std::string MCMWebVisualizer::pathToJson(const FrenetPath& path) {
     return json.str();
 }
 
-std::string MCMWebVisualizer::pathsArrayToJson(const std::vector<FrenetPath>& paths) {
+std::string MCMWebVisualizer::pathsArrayToJson(const std::vector<Path>& paths) {
     std::ostringstream json;
     json << "[";
     
@@ -151,14 +151,14 @@ std::string MCMWebVisualizer::createJsonUpdate() {
         const VehiclePathData& data = pair.second;
         
         json << "\"" << vehicleId << "\":{";
-        json << "\"position\":{\"x\":" << data.latPos << ",\"y\":" << data.lonPos << "},";
+        json << "\"position\":{\"x\":" << data.lonPos << ",\"y\":" << data.latPos << "},";
         // 主な速度は縦方向の速度を使用
-        json << "\"speed\":" << data.latSpeed << ",";
+        json << "\"speed\":" << data.lonSpeed << ",";
         // 加速度も追加
-        json << "\"acceleration\":" << data.latAccel << ",";
+        json << "\"acceleration\":" << data.lonAccel << ",";
         // 横方向の速度と加速度も追加
-        json << "\"lonSpeed\":" << data.lonSpeed << ",";
-        json << "\"lonAccel\":" << data.lonAccel << ",";
+        json << "\"latSpeed\":" << data.latSpeed << ",";
+        json << "\"latAccel\":" << data.latAccel << ",";
         json << "\"plannedPath\":" << pathToJson(data.plannedPath) << ",";
         json << "\"desiredPath\":" << pathToJson(data.desiredPath) << ",";
         json << "\"pathCandidates\":" << pathsArrayToJson(data.pathCandidates);

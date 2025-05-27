@@ -18,12 +18,12 @@ public:
 
     /**
 	 *  @param p [Polynomial] n次元方程式
-	 *  @param initTime [double] 軌跡の初期時刻 [s]
 	 *  @param duration [double] 軌跡の時間幅 [s]
 	 */
-	Trajectory(const Polynomial&, 
-			   double initTime, 
+	Trajectory(const Polynomial& p, 
 			   double duration);
+
+	Trajectory() = default; // デフォルトコンストラクタ
 
 	static constexpr double TIME_STEP = 0.1; // 軌跡のタイムステップ [s]
 

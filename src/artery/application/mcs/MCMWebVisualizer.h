@@ -23,10 +23,10 @@ public:
     void visualizeMCM(const ManeuverCoordinationMessage* mcm);
     
     // 自車の最新パスを設定
-    void setEgoPaths(const std::string& vehicleId, const FrenetPath& plannedPath, const FrenetPath& desiredPath);
+    void setEgoPaths(const std::string& vehicleId, const Path& plannedPath, const Path& desiredPath);
     
     // 候補経路を設定
-    void setPathCandidates(const std::string& vehicleId, const std::vector<FrenetPath>& candidates);
+    void setPathCandidates(const std::string& vehicleId, const std::vector<Path>& candidates);
     
     // クリーンアップ
     void close();
@@ -36,8 +36,8 @@ private:
     ~MCMWebVisualizer() = default;
     
     // JSONに変換するヘルパー関数
-    std::string pathToJson(const FrenetPath& path);
-    std::string pathsArrayToJson(const std::vector<FrenetPath>& paths);
+    std::string pathToJson(const Path& path);
+    std::string pathsArrayToJson(const std::vector<Path>& paths);
     std::string createJsonUpdate();
     void updateJsonFile();
     
@@ -47,15 +47,15 @@ private:
     
     // 車両データの保存
     struct VehiclePathData {
-        FrenetPath plannedPath;
-        FrenetPath desiredPath;
-        std::vector<FrenetPath> pathCandidates;
-        double latPos;
+        Path plannedPath;
+        Path desiredPath;
+        std::vector<Path> pathCandidates;
         double lonPos;
-        double latSpeed;
+        double latPos;
         double lonSpeed;
-        double latAccel;
+        double latSpeed;
         double lonAccel;
+        double latAccel;
         double lastUpdateTime;
     };
 

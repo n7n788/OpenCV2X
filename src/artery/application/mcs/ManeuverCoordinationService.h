@@ -2,7 +2,7 @@
 #define ARTERY_MANEUVERCOORDINATIONSERVICE_H_
 
 #include "artery/application/mcs/ManeuverCoordinationMessage.h"
-#include "artery/application/mcs/FrenetPlanning.h"
+#include "artery/application/mcs/PathGenerator.h"
 #include "artery/application/mcs/MCMWebVisualizer.h"
 #include "artery/application/ItsG5Service.h"
 #include <map>
@@ -65,14 +65,14 @@ private:
      * @param path2 経路2
      * @return 衝突している場合true
      */
-    bool checkCollision(const FrenetPath& path1, const FrenetPath& path2);
+    bool checkCollision(const Path& path1, const Path& path2);
     
     /*
      * senderIdの通行権が自分より優先かどうかを判定
      * @param senderId 車両ID
      * @return senderIdの方が優先度が高い場合true
      */
-    bool hasPriority(const std::string& senderId, const FrenetPath& path);
+    bool hasPriority(const std::string& senderId, const Path& path);
     
     /*
      * 受信した経路を受け入れるかどうかの判定
@@ -80,7 +80,7 @@ private:
      * @param desiredPath 希望経路
      * @return 受け入れる場合true
      */
-    bool acceptPath(const std::string& senderId, const FrenetPath& desiredPath);
+    bool acceptPath(const std::string& senderId, const Path& desiredPath);
     
     // 前方車両の位置を取得
     double getLeadingVehiclePosition(double lanePosition);
@@ -107,22 +107,22 @@ private:
     std::string mTraciId; //> 車両ID
     omnetpp::cMessage* mTrigger = nullptr; //> 送信トリガー
     
-    FrenetPlanning mPlanner; //> 経路計画
+    PathGenerator mPlanner; //> 経路計画
     const VehicleDataProvider* mVehicleDataProvider = nullptr;
     traci::VehicleController* mVehicleController = nullptr;
     
-    std::map<std::string, FrenetPath> mReceivedPlannedPaths; //> 受信した予定経路
-    std::map<std::string, FrenetPath> mReceivedDesiredPaths; //> 受信した希望経路
+    std::map<std::string, Path> mReceivedPlannedPaths; //> 受信した予定経路
+    std::map<std::string, Path> mReceivedDesiredPaths; //> 受信した希望経路
     
     std::set<std::string> mAcceptedIds; //> 交渉受け入れリスト
     std::map<std::string, std::pair<double, double>> mVehiclePoses; //> 他車両の位置情報
     std::map<std::string, std::pair<double, double>> mVehicleSpeeds; //> 他車両の速度情報
     
-    FrenetPath mPreviousPlannedPath; //> 1ステップ前の予定経路
-    FrenetPath mPreviousDesiredPath; //> 1ステップ前の希望経路
+    Path mPreviousPlannedPath; //> 1ステップ前の予定経路
+    Path mPreviousDesiredPath; //> 1ステップ前の希望経路
     
-    std::vector<FrenetPath> mPlannedPaths; //> 予定経路リスト
-    std::vector<FrenetPath> mDesiredPaths; //> 希望経路リスト
+    std::vector<Path> mPlannedPaths; //> 予定経路リスト
+    std::vector<Path> mDesiredPaths; //> 希望経路リスト
 
     double mLastGenerateMcmTime; //> 最後にMCMを送信した時間
     double mLastLaneChangeTime; //> 最後にレーン変更した時間

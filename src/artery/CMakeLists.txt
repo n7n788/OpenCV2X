@@ -6,8 +6,8 @@ add_library(core SHARED
     application/CaService.cc
     application/DenmObject.cc
     application/DenService.cc
-    application/mcs/FrenetPath.cc
-    application/mcs/FrenetPlanning.cc
+    application/mcs/Path.cc
+    application/mcs/PathGenerator.cc
     application/mcs/ManeuverCoordinationMessage.cc
     application/mcs/ManeuverCoordinationService.cc
     application/mcs/FourthDegreePolynomial.cc

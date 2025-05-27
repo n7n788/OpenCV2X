@@ -9,12 +9,12 @@ Register_Class(ManeuverCoordinationMessage)
 
 ManeuverCoordinationMessage::ManeuverCoordinationMessage() :
     omnetpp::cPacket("Maneuver Coordination Message"),
-    mLatPos(0.0),
-    mLatSpeed(0.0),
-    mLatAccel(0.0),
     mLonPos(0.0),
     mLonSpeed(0.0),
-    mLonAccel(0.0)
+    mLonAccel(0.0),
+    mLatPos(0.0),
+    mLatSpeed(0.0),
+    mLatAccel(0.0)
 {
 }
 

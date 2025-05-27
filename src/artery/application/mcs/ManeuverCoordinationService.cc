@@ -1,8 +1,8 @@
 // ManeuverCoordinationService.cc
 #include "artery/application/mcs/ManeuverCoordinationService.h"
 #include "artery/application/mcs/ManeuverCoordinationMessage.h"
-#include "artery/application/mcs/FrenetPath.h"
-#include "artery/application/mcs/FrenetPlanning.h"
+#include "artery/application/mcs/Path.h"
+#include "artery/application/mcs/PathGenerator.h"
 #include "artery/application/VehicleDataProvider.h"
 #include "artery/utility/Identity.h"
 #include "artery/utility/IdentityRegistry.h"
@@ -81,11 +81,11 @@ void ManeuverCoordinationService::initialize(int stage)
         mTraciId = getFacilities().get_const<Identity>().traci; 
 
         // 初期レーン位置を確認
-        double initialLonPos = mVehicleDataProvider->position().y.value();
-        int initialLane = static_cast<int>(initialLonPos / mLaneWidth);
+        double initialLatPos = mVehicleDataProvider->position().y.value();
+        int initialLane = static_cast<int>(initialLatPos / mLaneWidth);
         EV_INFO << "Vehicle " << mTraciId << " starting in lane " << initialLane 
                 << " at position (" << mVehicleDataProvider->position().x.value() 
-                << ", " << initialLonPos << ")\n";
+                << ", " << initialLatPos << ")\n";
     }
 }
 
@@ -95,7 +95,7 @@ void ManeuverCoordinationService::trigger()
     
     // MCMの生成
     auto mcm = generate();
-    
+ 
     // BTPリクエストの設定
     btp::DataRequestB req;
     req.destination_port = host_cast<PortNumber>(getPortNumber());
@@ -105,19 +105,19 @@ void ManeuverCoordinationService::trigger()
     
     // 車両制御：予定経路に沿って滑らかに移動
     if (!mPlannedPaths.empty() && !isObstacle(mTraciId)) {
-        const FrenetPath& plannedPath = mPlannedPaths.back();
+        const Path& plannedPath = mPlannedPaths.back();
         // TraCI APIを取得
         auto& api = mVehicleController->getLiteAPI();
         
         // 現在のレーン位置を取得
-        double currentLonPos = mVehicleDataProvider->position().y.value();
-        int currentLane = static_cast<int>((mLaneWidth * mNumLanes -  currentLonPos) / mLaneWidth);
+        double currentLatPos = mVehicleDataProvider->position().y.value();
+        int currentLane = static_cast<int>((mLaneWidth * mNumLanes -  currentLatPos) / mLaneWidth);
 
-        // 目標レーンを取得 (FrenetPathの最終目標位置から計算)
-        const auto& lonPoses = plannedPath.getLonTrajectory().getPoses();
-        if (!lonPoses.empty()) {
-            double targetLonPos = lonPoses.back();
-            int targetLane = static_cast<int>((mLaneWidth * mNumLanes - targetLonPos) / mLaneWidth);
+        // 目標レーンを取得 (Pathの最終目標位置から計算)
+        const auto& latPoses = plannedPath.getLatTrajectory().getPoses();
+        if (!latPoses.empty()) {
+            double targetLatPos = latPoses.back();
+            int targetLane = static_cast<int>((mLaneWidth * mNumLanes - targetLatPos) / mLaneWidth);
 
             // 現在のレーンと目標レーンが異なる場合、ステータスを変更して車線変更を開始
             if (!mLaneChangeInProgress && currentLane != targetLane) {
@@ -152,12 +152,12 @@ void ManeuverCoordinationService::trigger()
         }
         
         // 縦方向の速度を設定（軌跡から適切な速度を計算）
-        const auto& latSpeeds = plannedPath.getLatTrajectory().getSpeeds();
-        if (!latSpeeds.empty()) {
+        const auto& lonSpeeds = plannedPath.getLonTrajectory().getSpeeds();
+        if (!lonSpeeds.empty()) {
             // 目標速度を設定（急激な速度変化を避けるため徐々に調整）
             int index = 1;
-            if (index < static_cast<int>(latSpeeds.size())) {
-                double targetSpeed = latSpeeds[index];
+            if (index < static_cast<int>(lonSpeeds.size())) {
+                double targetSpeed = lonSpeeds[index];
                 double currentSpeed = mVehicleDataProvider->speed().value();
                 double adjustedSpeed;
 
@@ -187,46 +187,46 @@ void ManeuverCoordinationService::trigger()
 ManeuverCoordinationMessage* ManeuverCoordinationService::generate()
 {
     // 現在の車両状態の取得
-    double latPos = mVehicleDataProvider->position().x.value();
-    double latSpeed = mVehicleDataProvider->speed().value();
-    double latAccel = mVehicleDataProvider->acceleration().value();
-    double lonPos = mVehicleDataProvider->position().y.value();
-    double lonSpeed = 0.0; // 横方向の速度は通常0に近い
-    double lonAccel = 0.0; // 横方向の加速度も通常0に近い
+    double lonPos = mVehicleDataProvider->position().x.value();
+    double lonSpeed = mVehicleDataProvider->speed().value();
+    double lonAccel = mVehicleDataProvider->acceleration().value();
+    double latPos = mVehicleDataProvider->position().y.value();
+    double latSpeed = 0.0; // 横方向の速度は通常0に近い
+    double latAccel = 0.0; // 横方向の加速度も通常0に近い
     double maxSpeed = mVehicleController->getMaxSpeed().value();
 
     // 候補経路を計算
-    std::vector<FrenetPath> pathCandidates;
+    std::vector<Path> pathCandidates;
     // 到達可能なレーン中央位置を計算
     std::vector<double> laneCenterPositions;
 
     // 車線変更後にインターバル経過した場合、車線変更を許して候補経路を生成する 
     if (mLastLaneChangeTime < mLaneChangeInterval || omnetpp::simTime().dbl() - mLastLaneChangeTime > mLaneChangeInterval) {
         for (double l : mCenterLanes) {
-            if (abs(l - lonPos) < mLaneWidth / 2.0 || 
-                abs(l - lonPos - mLaneWidth) < mLaneWidth / 2.0 || 
-                abs(l - lonPos + mLaneWidth) < mLaneWidth / 2.0) {
+            if (abs(l - latPos) < mLaneWidth / 2.0 || 
+                abs(l - latPos - mLaneWidth) < mLaneWidth / 2.0 || 
+                abs(l - latPos + mLaneWidth) < mLaneWidth / 2.0) {
                 // 車線変更可能な場合、レーン中央位置を追加
                 laneCenterPositions.push_back(l);
             }
         }
     } else {
         // 車線変更不可
-        laneCenterPositions.push_back(lonPos); 
+        laneCenterPositions.push_back(latPos); 
     }
     
     // 全レーンに対して、最高速度に達する候補経路を生成（レーン中央位置を使用）
     auto speedPathCandidates = mPlanner.generateMaxSpeedPathCandidates(
-        latPos, latSpeed, latAccel,
         lonPos, lonSpeed, lonAccel,
+        latPos, latSpeed, latAccel,
         maxSpeed, laneCenterPositions, mConvTime
     );
     pathCandidates.insert(pathCandidates.end(), speedPathCandidates.begin(), speedPathCandidates.end());
 
     // 全レーンに対して、前方車両の位置と速度を取得 
-    std::vector<double> leadingLatPoses;
-    std::vector<double> leadingLatSpeeds;
     std::vector<double> leadingLonPoses;
+    std::vector<double> leadingLonSpeeds;
+    std::vector<double> leadingLatPoses;
     for (double laneCenterPos : laneCenterPositions) {
         double leadingVehiclePos = getLeadingVehiclePosition(laneCenterPos);
         if (leadingVehiclePos > 0) { // 前方車両が存在する場合
@@ -234,19 +234,19 @@ ManeuverCoordinationMessage* ManeuverCoordinationService::generate()
             // 先行車両の5秒後の予測位置 = 現在位置 + 速度 * 時間
             double predictedLeadingVehiclePos = leadingVehiclePos + (leadingVehicleSpeed * mConvTime);
             // 目標位置 = 先行車両の5秒後の予測位置 - 自車両の長さ - 安全距離
-            double maxTargetPos = predictedLeadingVehiclePos - mVehicleLength - latSpeed * mSafetySecond;
+            double maxTargetPos = predictedLeadingVehiclePos - mVehicleLength - lonSpeed * mSafetySecond;
 
-            leadingLatPoses.push_back(leadingVehiclePos);
-            leadingLatSpeeds.push_back(leadingVehicleSpeed);
-            leadingLonPoses.push_back(laneCenterPos);
+            leadingLonPoses.push_back(leadingVehiclePos);
+            leadingLonSpeeds.push_back(leadingVehicleSpeed);
+            leadingLatPoses.push_back(laneCenterPos);
         }
     }
 
     // 前方車両が存在するレーンに対して、目標位置に達する候補経路を生成
     auto posPathCandidates = mPlanner.generateMaxPosPathCandidates(
-        latPos, latSpeed, latAccel,
         lonPos, lonSpeed, lonAccel,
-        leadingLatPoses, leadingLatSpeeds, maxSpeed, leadingLonPoses, mConvTime
+        latPos, latSpeed, latAccel,
+        leadingLonPoses, leadingLonSpeeds, maxSpeed, leadingLatPoses, mConvTime
     );
     pathCandidates.insert(pathCandidates.end(), posPathCandidates.begin(), posPathCandidates.end());
 
@@ -254,9 +254,9 @@ ManeuverCoordinationMessage* ManeuverCoordinationService::generate()
     // 受信した希望経路との衝突チェックと交渉受け入れ
     for (const auto& entry : mReceivedDesiredPaths) {
         const std::string& senderId = entry.first;
-        const FrenetPath& desiredPath = entry.second;
+        const Path& desiredPath = entry.second;
         
-        if (!mPreviousPlannedPath.getLatTrajectory().getPoses().empty() && 
+        if (!mPreviousPlannedPath.getLonTrajectory().getPoses().empty() && 
             checkCollision(mPreviousPlannedPath, desiredPath)) {
             // 衝突する希望経路がある場合、受け入れ判定
             if (acceptPath(senderId, desiredPath)) {
@@ -266,8 +266,8 @@ ManeuverCoordinationMessage* ManeuverCoordinationService::generate()
     }
     
     // 最適な予定経路と希望経路の選択
-    FrenetPath plannedPath = FrenetPath();
-    FrenetPath desiredPath = FrenetPath();
+    Path plannedPath = Path();
+    Path desiredPath = Path();
     
     // 予定経路: 以下の全てと衝突しない経路の中でコストが最小の経路を選択
     // 自分より通行権が高い車両の予定経路
@@ -280,7 +280,7 @@ ManeuverCoordinationMessage* ManeuverCoordinationService::generate()
         // 自分より通行権が高い車両との予定経路との衝突チェック
         for (const auto& entry : mReceivedPlannedPaths) {
             const std::string& otherId = entry.first;
-            const FrenetPath& otherPath = entry.second;
+            const Path& otherPath = entry.second;
             
             if (hasPriority(otherId, path) && checkCollision(path, otherPath)) {
                 isValid = false;
@@ -322,7 +322,7 @@ ManeuverCoordinationMessage* ManeuverCoordinationService::generate()
         // 障害物との衝突チェック
         for (const auto& entry : mReceivedPlannedPaths) {
             const std::string& otherId = entry.first;
-            const FrenetPath& otherPath = entry.second;
+            const Path& otherPath = entry.second;
             
             if (isObstacle(otherId) && checkCollision(path, otherPath)) {
                 isValid = false;
@@ -338,13 +338,13 @@ ManeuverCoordinationMessage* ManeuverCoordinationService::generate()
 
     // 希望経路と予定経路のコスト差分が閾値未満である場合、希望経路を送信しない
     if (plannedPath.getCost() - desiredPath.getCost() < mDesiredCostThreshold) {
-        desiredPath = FrenetPath(); // 希望経路を空にする
+        desiredPath = Path(); // 希望経路を空にする
     }
 
     // 予定経路がない場合、等速で移動する経路を使用 
     // TO DO 修正したい
     if (plannedPath.getCost() < 0) {
-        plannedPath = mPlanner.generateSpeedPath(latPos, latSpeed, latAccel, lonPos, lonSpeed, lonAccel, latSpeed, mConvTime); 
+        plannedPath = mPlanner.generateSpeedPath(lonPos, lonSpeed, lonAccel, latPos, latSpeed, latAccel, lonSpeed, mConvTime); 
     }
 
     // MCMの作成
@@ -352,12 +352,12 @@ ManeuverCoordinationMessage* ManeuverCoordinationService::generate()
     mcm->setTraciId(mTraciId);
     mcm->setPlannedPath(plannedPath);
     mcm->setDesiredPath(desiredPath);
-    mcm->setLatPos(latPos);
-    mcm->setLatSpeed(latSpeed);
-    mcm->setLatAccel(latAccel);
     mcm->setLonPos(lonPos);
     mcm->setLonSpeed(lonSpeed);
     mcm->setLonAccel(lonAccel);
+    mcm->setLatPos(latPos);
+    mcm->setLatSpeed(latSpeed);
+    mcm->setLatAccel(latAccel);
     
     // メッセージサイズの設定（実際のサイズを計算する必要がある）
     mcm->setByteLength(200);
@@ -392,8 +392,8 @@ void ManeuverCoordinationService::indicate(const vanetza::btp::DataIndication&, 
     mReceivedDesiredPaths[senderId] = mcm->getDesiredPath();
     
     // 車両位置情報の更新
-    mVehiclePoses[senderId] = std::make_pair(mcm->getLatPos(), mcm->getLonPos());
-    mVehicleSpeeds[senderId] = std::make_pair(mcm->getLatSpeed(), mcm->getLonSpeed());
+    mVehiclePoses[senderId] = std::make_pair(mcm->getLonPos(), mcm->getLatPos());
+    mVehicleSpeeds[senderId] = std::make_pair(mcm->getLonSpeed(), mcm->getLatSpeed());
     
     // 可視化を更新
     if (mEnableVisualization) {
@@ -412,34 +412,34 @@ void ManeuverCoordinationService::handleMessage(omnetpp::cMessage* msg)
     }
 }
 
-bool ManeuverCoordinationService::checkCollision(const FrenetPath& path1, const FrenetPath& path2)
+bool ManeuverCoordinationService::checkCollision(const Path& path1, const Path& path2)
 {
     // 経路の衝突判定ロジック
     // 軌道の各時点で位置を比較し、一定の閾値以下なら衝突と判定
 
-    const double LAT_COLLISION_THRESHOLD = mVehicleLength / 2;
-    const double LON_COLLISION_THRESHOLD = mLaneWidth / 2;
+    const double LON_COLLISION_THRESHOLD = mVehicleLength / 2;
+    const double LAT_COLLISION_THRESHOLD = mLaneWidth / 2;
     
-    const auto& lat1 = path1.getLatTrajectory().getPoses();
-    const auto& lat1Speeds = path1.getLatTrajectory().getSpeeds();
     const auto& lon1 = path1.getLonTrajectory().getPoses();
-    const auto& lat2 = path2.getLatTrajectory().getPoses();
+    const auto& lon1Speeds = path1.getLonTrajectory().getSpeeds();
+    const auto& lat1 = path1.getLatTrajectory().getPoses();
     const auto& lon2 = path2.getLonTrajectory().getPoses();
+    const auto& lat2 = path2.getLatTrajectory().getPoses();
     
     // 軌道のサイズチェック
-    if (lat1.empty() || lon1.empty() || lat2.empty() || lon2.empty()) {
+    if (lon1.empty() || lat1.empty() || lon2.empty() || lat2.empty()) {
         return false;
     }
     
     // 軌道の長さは同じであるため最小値を使用
-    size_t size = std::min({lat1.size(), lon1.size(), lat2.size(), lon2.size()});
+    size_t size = std::min({lon1.size(), lat1.size(), lon2.size(), lat2.size()});
     
     // 各時点で距離をチェック
     for (size_t i = 0; i < size; i++) {
-        double dlat = lat1[i] - lat2[i];
         double dlon = lon1[i] - lon2[i];
+        double dlat = lat1[i] - lat2[i];
         
-        if (abs(dlat) < LAT_COLLISION_THRESHOLD + lat1Speeds[i] * mSafetySecond && abs(dlon) < LON_COLLISION_THRESHOLD) {
+        if (abs(dlon) < LON_COLLISION_THRESHOLD + lon1Speeds[i] * mSafetySecond && abs(dlat) < LAT_COLLISION_THRESHOLD) {
             return true; // 衝突あり
         }
     }
@@ -447,7 +447,7 @@ bool ManeuverCoordinationService::checkCollision(const FrenetPath& path1, const 
     return false; // 衝突なし
 }
 
-bool ManeuverCoordinationService::hasPriority(const std::string& senderId, const FrenetPath& path)
+bool ManeuverCoordinationService::hasPriority(const std::string& senderId, const Path& path)
 {
     // 優先度判定ロジック
     // 障害物は最も優先度が高い
@@ -458,23 +458,23 @@ bool ManeuverCoordinationService::hasPriority(const std::string& senderId, const
     if (it == mVehiclePoses.end()) return false; // senderIdの車両が存在しない場合は優先度が低い
 
     const auto& pos = it->second;
-    double latPos = pos.first;
-    double lonPos = pos.second;
-    double myLatPos = mVehicleDataProvider->position().x.value();
-    double myLonPos = mVehicleDataProvider->position().y.value();
-    double myLastLonPos = path.getLonTrajectory().getPoses().back(); 
+    double lonPos = pos.first;
+    double latPos = pos.second;
+    double myLonPos = mVehicleDataProvider->position().x.value();
+    double myLatPos = mVehicleDataProvider->position().y.value();
+    double myLastLatPos = path.getLatTrajectory().getPoses().back(); 
 
     // 自車両が車線変更しようとしており、senderIdの車両が変更先の車線にいる場合、senderIdの方が優先度が高い
-    if (std::abs(myLastLonPos - myLonPos) > mLaneWidth / 2) {
-        if (std::abs(lonPos - myLastLonPos) < mLaneWidth / 2) return true;
-        if (myLonPos < lonPos && lonPos < myLastLonPos) return true;
-        if (myLonPos > lonPos && lonPos > myLastLonPos) return true;
+    if (std::abs(myLastLatPos - myLatPos) > mLaneWidth / 2) {
+        if (std::abs(latPos - myLastLatPos) < mLaneWidth / 2) return true;
+        if (myLatPos < latPos && latPos < myLastLatPos) return true;
+        if (myLatPos > latPos && latPos > myLastLatPos) return true;
     }
     
     // 自車両が車線変更せず、senderIdと車線が同じで、sendeIdが先行車両の場合、senderIdの方が優先度が高い
-    if (std::abs(myLastLonPos - myLonPos) < mLaneWidth / 2 && std::abs(lonPos - myLastLonPos) < mLaneWidth / 2) {
+    if (std::abs(myLastLatPos - myLatPos) < mLaneWidth / 2 && std::abs(latPos - myLastLatPos) < mLaneWidth / 2) {
         // 自車両の位置とsenderIdの車両の位置を比較
-        if (latPos > myLatPos) {
+        if (lonPos > myLonPos) {
             return true; // senderIdの方が優先度が高い
         }
     }
@@ -484,7 +484,7 @@ bool ManeuverCoordinationService::hasPriority(const std::string& senderId, const
     return false;
 } 
 
-bool ManeuverCoordinationService::acceptPath(const std::string& senderId, const FrenetPath& desiredPath)
+bool ManeuverCoordinationService::acceptPath(const std::string& senderId, const Path& desiredPath)
 {
     // 経路受け入れ判定ロジック
     // 30%の確率で受け入れる
