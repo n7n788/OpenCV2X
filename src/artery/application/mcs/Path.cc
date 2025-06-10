@@ -22,15 +22,11 @@ void Path::calculateCost(double convergenceTime, double targetLonPos, double tar
         latJerkSquareSum += jerk * jerk;
     }
 
-    // 縦方向のコスト = ジャークの二乗和 + 収束時間 + 目標位置との差分自乗 + 目標スピードとの差分自乗
+    // 縦方向のコスト = ジャークの二乗和 + 目標スピードとの差分自乗
     lonCost = K_JERK * lonJerkSquareSum + 
               K_SPEED * lonDiffSpeed * lonDiffSpeed;
-            //   K_TIME * (5.0 - convergenceTime) + 
-            //   K_DISTANCE * lonDiffPos * lonDiffPos +
-    // 横方向のコスト = ジャークの二乗和 + 収束時間 + センターラインまでの距離の二乗
+    // 横方向のコスト = ジャークの二乗和 + センターラインまでの距離の二乗
     latCost = K_JERK * latJerkSquareSum;
-            //   K_TIME * convergenceTime;
-            //   K_DISTANCE * mLatTrajectory.getPoses().back() * mLatTrajectory.getPoses().back(); 
     mCost = K_LON * lonCost + K_LAT * latCost;
 }
 }

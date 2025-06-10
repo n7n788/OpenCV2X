@@ -23,8 +23,6 @@ public:
 	Path() : mCost(-1.0) {}
 
 	static constexpr double K_JERK = 0.1; // ジャークの重み
-	static constexpr double K_TIME = 0.0; // 時間の重み
-	static constexpr double K_DISTANCE = 3.0; // 距離の重み
 	static constexpr double K_SPEED = 5.0; // 速度の重み
 	static constexpr double K_LON = 1.0; // 縦方向の重み
 	static constexpr double K_LAT = 1.0; // 横方向の重み
