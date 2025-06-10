@@ -1,315 +1,306 @@
+
 # Maneuver Coordination Service (MCS)
 
 ## 概要
 
-Maneuver Coordination Service (MCS) は、車両間で経路情報を共有し、協調的な運転操作を実現するためのV2X（Vehicle-to-Everything）サービスです。各車両は自身の予定経路と希望経路をManeuver Coordination Message (MCM) として送信し、受信した情報を基に衝突回避と最適な経路選択を行います。
+Maneuver Coordination Service (MCS) は、V2X通信を用いて車両間で経路情報を共有し、協調的な運転操作を実現するシステムです。各車両は自身の予定経路と希望経路をManeuver Coordination Message (MCM)として送信し、受信した情報を基に衝突回避と最適な経路選択を行います。
 
-### 主な機能
+## 主な機能
 
-- 車両の現在状態（位置、速度、加速度）の共有
-- 予定経路（Planned Path）と希望経路（Desired Path）の生成と送信
-- 他車両との衝突判定と回避
-- 優先度に基づく経路調整
-- リアルタイムでの経路可視化
+- **経路共有**: 車両の現在状態（位置、速度、加速度）と将来経路の共有
+- **協調制御**: 予定経路（Planned Path）と希望経路（Desired Path）による柔軟な調整
+- **衝突回避**: 他車両との衝突判定と優先度に基づく経路調整
+- **リアルタイム可視化**: Webブラウザでの経路表示
+- **多項式軌跡**: 滑らかで快適な軌跡生成
 
 ## システムアーキテクチャ
 
-```
-┌─────────────────────────────────────────────────────────────┐
-│                    MCS Application Layer                    │
-├─────────────────────────────────────────────────────────────┤
-│  ManeuverCoordinationService                               │
-│  ├── MCM Generation & Processing                           │
-│  ├── Path Planning & Optimization                          │
-│  ├── Collision Detection                                   │
-│  └── Vehicle Control                                       │
-├─────────────────────────────────────────────────────────────┤
-│  Core Components                                           │
-│  ├── PathGenerator        ├── MCMWebVisualizer             │
-│  ├── Path & Trajectory    ├── ManeuverCoordinationMessage  │
-│  └── Polynomial Classes   └── Configuration (.ned)         │
-├─────────────────────────────────────────────────────────────┤
-│                    V2X Communication                        │
-│                    (VANETZA/ITS-G5)                        │
-├─────────────────────────────────────────────────────────────┤
-│                    Vehicle Platform                         │
-│                    (SUMO/TRACI)                            │
-└─────────────────────────────────────────────────────────────┘
-```
-
-### レイヤー構成
-
-1. **アプリケーション層**: MCSの主要ロジック
-2. **コアコンポーネント層**: 経路生成、可視化、メッセージング
-3. **通信層**: V2X通信（VANETZA/ITS-G5）
-4. **車両プラットフォーム層**: 車両シミュレーション（SUMO/TRACI）
-
-## クラス図
+### クラス図
 
 ```mermaid
 classDiagram
     class ManeuverCoordinationService {
-        -PathGenerator mPlanner
-        -VehicleDataProvider* mVehicleDataProvider
-        -VehicleController* mVehicleController
-        -map~string,Path~ mReceivedPlannedPaths
-        -map~string,Path~ mReceivedDesiredPaths
-        -set~string~ mAcceptedIds
-        +initialize(int stage)
+        -mPathGenerator: PathGenerator
+        -mPathPlanner: PathPlanner
+        -mCollisionDetector: CollisionDetector
+        -mNegotiationManager: NegotiationManager
+        -mVehicleWrapper: VehicleControllerWrapper
+        +initialize(stage)
         +trigger()
-        +generate() ManeuverCoordinationMessage*
-        +indicate(DataIndication, cPacket*)
-        +checkCollision(Path, Path) bool
-        +hasPriority(string, Path) bool
-        +acceptPath(string, Path) bool
+        +indicate(indication, packet)
+        +generate() ManeuverCoordinationMessage
     }
 
-    class ManeuverCoordinationMessage {
-        -string mTraciId
-        -Path mPlannedPath
-        -Path mDesiredPath
-        -double mLonPos, mLatPos
-        -double mLonSpeed, mLatSpeed
-        -double mLonAccel, mLatAccel
-        +getTraciId() string
-        +getPlannedPath() Path
-        +getDesiredPath() Path
-        +setPlannedPath(Path)
-        +setDesiredPath(Path)
+    class PathPlanner {
+        -mGenerator: PathGenerator
+        -mCollisionDetector: CollisionDetector
+        +generateCandidatePaths() vector~Path~
+        +selectPlannedPath() Path
+        +selectDesiredPath() Path
     }
 
     class PathGenerator {
-        +generateMaxSpeedPathCandidates(...) vector~Path~
-        +generateMaxPosPathCandidates(...) vector~Path~
-        +generateSpeedPath(...) Path
+        +generateMaxSpeedPathCandidates() vector~Path~
+        +generateMaxPosPathCandidates() vector~Path~
+        +generateSpeedPath() Path
+    }
+
+    class CollisionDetector {
+        +checkCollision(path1, path2) bool
+        +hasPriority(senderId, myPath) bool
+        +isObstacle(traciId) bool
+    }
+
+    class NegotiationManager {
+        -mDetector: CollisionDetector
+        +processReceivedDesiredPaths()
+        +acceptPath(senderId, path) bool
+    }
+
+    class VehicleControllerWrapper {
+        -mController: VehicleController
+        +executePath(plannedPath, traciId)
+        +handleLaneChange()
+        +handleSpeedControl()
     }
 
     class Path {
-        -Trajectory mLonTrajectory
-        -Trajectory mLatTrajectory
-        -double mCost
-        +static K_JERK, K_SPEED, K_LON, K_LAT
-        +calculateCost(double, double, double)
-        +getLonTrajectory() Trajectory
-        +getLatTrajectory() Trajectory
-        +getCost() double
+        -mLonTrajectory: Trajectory
+        -mLatTrajectory: Trajectory
+        -mCost: double
+        +calculateCost()
     }
 
     class Trajectory {
-        -vector~double~ mPoses
-        -vector~double~ mSpeeds
-        -vector~double~ mAccels
-        -vector~double~ mJerks
-        -double mDuration
-        +static TIME_STEP
-        +getPoses() vector~double~
-        +getSpeeds() vector~double~
-        +getAccels() vector~double~
-        +getJerks() vector~double~
+        -mPoses: vector~double~
+        -mSpeeds: vector~double~
+        -mAccels: vector~double~
+        -mJerks: vector~double~
     }
 
     class Polynomial {
         <<abstract>>
-        +calc_x(double) double
-        +calc_v(double) double
-        +calc_a(double) double
-        +calc_j(double) double
+        +calc_x(t) double
+        +calc_v(t) double
+        +calc_a(t) double
+        +calc_j(t) double
     }
 
     class FourthDegreePolynomial {
-        -double a0, a1, a2, a3, a4
-        +FourthDegreePolynomial(xInit, vInit, aInit, vFinal, aFinal, duration)
-        +calc_x(double) double
-        +calc_v(double) double
-        +calc_a(double) double
-        +calc_j(double) double
+        -a0, a1, a2, a3, a4: double
     }
 
     class FifthDegreePolynomial {
-        -double a0, a1, a2, a3, a4, a5
-        +FifthDegreePolynomial(xInit, vInit, aInit, xFinal, vFinal, aFinal, duration)
-        +calc_x(double) double
-        +calc_v(double) double
-        +calc_a(double) double
-        +calc_j(double) double
+        -a0, a1, a2, a3, a4, a5: double
+    }
+
+    class ManeuverCoordinationMessage {
+        -mTraciId: string
+        -mPlannedPath: Path
+        -mDesiredPath: Path
+        -mLonPos, mLonSpeed, mLonAccel: double
+        -mLatPos, mLatSpeed, mLatAccel: double
     }
 
     class MCMWebVisualizer {
-        -unordered_map~string,VehiclePathData~ mVehicleData
-        +static getInstance() MCMWebVisualizer&
-        +initialize(cModule*, int)
-        +visualizeMCM(ManeuverCoordinationMessage*)
-        +setEgoPaths(string, Path, Path)
-        +setPathCandidates(string, vector~Path~)
-        +close()
+        -mVehicleData: map~string, VehiclePathData~
+        +visualizeMCM(mcm)
+        +setEgoPaths()
+        +setPathCandidates()
     }
 
-    ManeuverCoordinationService --> ManeuverCoordinationMessage : creates
-    ManeuverCoordinationService --> PathGenerator : uses
-    ManeuverCoordinationService --> MCMWebVisualizer : uses
-    PathGenerator --> Path : creates
-    Path --> Trajectory : contains
-    Trajectory --> Polynomial : uses
+    ManeuverCoordinationService --> PathPlanner
+    ManeuverCoordinationService --> PathGenerator
+    ManeuverCoordinationService --> CollisionDetector
+    ManeuverCoordinationService --> NegotiationManager
+    ManeuverCoordinationService --> VehicleControllerWrapper
+    ManeuverCoordinationService --> MCMWebVisualizer
+    PathPlanner --> PathGenerator
+    PathPlanner --> CollisionDetector
+    NegotiationManager --> CollisionDetector
+    Path --> Trajectory
+    Trajectory --> Polynomial
     Polynomial <|-- FourthDegreePolynomial
     Polynomial <|-- FifthDegreePolynomial
+    ManeuverCoordinationService --> ManeuverCoordinationMessage
 ```
 
-## シーケンス図
-
-### MCM送信・受信フロー
+### シーケンス図
 
 ```mermaid
 sequenceDiagram
-    participant V1 as Vehicle 1
-    participant MCS1 as MCS Service 1
-    participant V2X as V2X Network
-    participant MCS2 as MCS Service 2
-    participant V2 as Vehicle 2
-    participant Viz as Web Visualizer
-
-    Note over MCS1, MCS2: 定期的なMCM送信サイクル（0.1秒間隔）
-
-    V1->>MCS1: 現在の車両状態取得
-    MCS1->>MCS1: 経路候補生成
-    MCS1->>MCS1: 衝突判定・最適化
-    MCS1->>MCS1: MCM生成
-    MCS1->>V2X: MCM送信
-    MCS1->>Viz: 可視化データ更新
-    
-    V2X->>MCS2: MCM受信
-    MCS2->>MCS2: 受信経路保存
-    MCS2->>MCS2: 優先度判定
-    MCS2->>MCS2: 交渉処理
-    MCS2->>Viz: 可視化データ更新
-    
-    Note over MCS2: 次回の経路計画で受信情報を考慮
-```
-
-### 経路計画・最適化フロー
-
-```mermaid
-sequenceDiagram
-    participant MCS as MCS Service
+    participant Vehicle as Vehicle Node
+    participant MCS as ManeuverCoordinationService
+    participant PP as PathPlanner
     participant PG as PathGenerator
-    participant Path as Path
-    participant Traj as Trajectory
-    participant Poly as Polynomial
+    participant CD as CollisionDetector
+    participant NM as NegotiationManager
+    participant VCW as VehicleControllerWrapper
+    participant Viz as MCMWebVisualizer
 
-    MCS->>MCS: 車両状態取得
-    MCS->>PG: generateMaxSpeedPathCandidates()
-    PG->>Poly: FourthDegreePolynomial作成
-    PG->>Traj: Trajectory作成（縦方向）
-    PG->>Poly: FifthDegreePolynomial作成
-    PG->>Traj: Trajectory作成（横方向）
-    PG->>Path: Path作成
-    Path->>Path: calculateCost()
-    PG-->>MCS: 候補経路リスト
+    Note over Vehicle, Viz: 定期的なMCM送信サイクル
 
-    MCS->>PG: generateMaxPosPathCandidates()
-    PG-->>MCS: 追従経路リスト
+    Vehicle->>MCS: trigger()
+    MCS->>PP: generateCandidatePaths()
+    PP->>PG: generateMaxSpeedPathCandidates()
+    PG-->>PP: 候補経路群
+    PP->>PG: generateMaxPosPathCandidates()
+    PG-->>PP: 追従経路群
+    PP-->>MCS: 全候補経路
 
-    loop 各候補経路
-        MCS->>MCS: 衝突判定
-        MCS->>MCS: 優先度チェック
-    end
+    MCS->>NM: processReceivedDesiredPaths()
+    NM->>CD: checkCollision()
+    CD-->>NM: 衝突判定結果
+    NM-->>MCS: 交渉受け入れリスト更新
 
-    MCS->>MCS: 最適経路選択
-    MCS->>MCS: 車両制御コマンド発行
+    MCS->>PP: selectPlannedPath()
+    PP->>CD: checkCollision()
+    PP->>CD: hasPriority()
+    CD-->>PP: 優先度判定
+    PP-->>MCS: 最適予定経路
+
+    MCS->>PP: selectDesiredPath()
+    PP->>CD: checkCollision()
+    CD-->>PP: 衝突判定
+    PP-->>MCS: 最適希望経路
+
+    MCS->>MCS: generate() MCM
+    MCS->>Vehicle: MCM送信
+
+    MCS->>VCW: executePath()
+    VCW->>VCW: handleLaneChange()
+    VCW->>VCW: handleSpeedControl()
+
+    MCS->>Viz: setEgoPaths()
+    MCS->>Viz: setPathCandidates()
+    Viz->>Viz: JSON出力
+
+    Note over Vehicle, Viz: 他車両からのMCM受信処理
+
+    Vehicle->>MCS: indicate(MCM)
+    MCS->>MCS: 受信データ保存
+    MCS->>Viz: visualizeMCM()
 ```
 
 ## ファイル構成
 
 ```
 src/artery/application/mcs/
-├── ManeuverCoordinationService.h/.cc      # メインサービス
-├── ManeuverCoordinationService.ned        # OMNeT++設定
-├── ManeuverCoordinationMessage.h/.cc      # MCMメッセージ
-├── PathGenerator.h/.cc                    # 経路生成器
-├── Path.h/.cc                            # 経路クラス
-├── Trajectory.h/.cc                      # 軌跡クラス
-├── Polynomial.h                          # 多項式抽象クラス
-├── FourthDegreePolynomial.h/.cc          # 4次多項式
-├── FifthDegreePolynomial.h/.cc           # 5次多項式
-└── MCMWebVisualizer.h/.cc               # Web可視化
+├── ManeuverCoordinationService.h        # メインサービスクラス
+├── ManeuverCoordinationService.cc
+├── ManeuverCoordinationService.ned      # OMNeT++ネットワーク定義
+├── ManeuverCoordinationMessage.h        # MCMメッセージクラス
+├── ManeuverCoordinationMessage.cc
+├── PathPlanner.h                        # 高レベル経路計画
+├── PathPlanner.cc
+├── PathGenerator.h                      # 基本経路生成
+├── PathGenerator.cc
+├── CollisionDetector.h                  # 衝突判定
+├── CollisionDetector.cc
+├── NegotiationManager.h                 # 交渉管理
+├── NegotiationManager.cc
+├── VehicleControllerWrapper.h           # 車両制御ラッパー
+├── VehicleControllerWrapper.cc
+├── Path.h                              # 経路クラス
+├── Path.cc
+├── Trajectory.h                        # 軌跡クラス
+├── Trajectory.cc
+├── Polynomial.h                        # 多項式基底クラス
+├── FourthDegreePolynomial.h            # 4次多項式
+├── FourthDegreePolynomial.cc
+├── FifthDegreePolynomial.h             # 5次多項式
+├── FifthDegreePolynomial.cc
+├── MCMWebVisualizer.h                  # Web可視化
+└── MCMWebVisualizer.cc
 ```
 
 ## 設定パラメータ
 
 ### ManeuverCoordinationService.ned
 
-```ned
-parameters:
-    double updateInterval @unit(s) = default(0.1s);     // 更新間隔
-    double vehicleLength @unit(m) = default(5m);        // 車両長
-    int numLanes = default(3);                          // レーン数
-    double laneWidth @unit(m) = default(3.2m);          // レーン幅
-    double convergenceTime @unit(s) = default(5s);      // 収束時間
-    bool enableVisualization = default(true);           // 可視化有効
-    int visualizationPort = default(8080);              // 可視化ポート
+| パラメータ | 型 | デフォルト値 | 説明 |
+|-----------|---|-------------|------|
+| `vehicleLength` | double | 5m | 車両長 |
+| `numLanes` | int | 3 | レーン数 |
+| `laneWidth` | double | 3.2m | レーン幅 |
+| `convergenceTime` | double | 5s | 経路の時間幅 |
+| `desiredCostThreshold` | double | 100.0 | 希望経路選択のコスト閾値 |
+| `safetySecond` | double | 2.0s | 安全秒数 |
+| `laneChangeInterval` | double | 5.0s | 車線変更間隔 |
+| `enableVisualization` | bool | true | 可視化有効フラグ |
+| `visualizationPort` | int | 8080 | 可視化用ポート |
+
+### コスト関数パラメータ (Path.h)
+
+| パラメータ | 値 | 説明 |
+|-----------|---|------|
+| `K_JERK` | 0.1 | ジャークの重み |
+| `K_SPEED` | 5.0 | 速度の重み |
+| `K_LON` | 1.0 | 縦方向の重み |
+| `K_LAT` | 1.0 | 横方向の重み |
+
+## シミュレーションの実行方法
+
+### 1. シナリオファイルの設定
+
+```ini
+# omnetpp.ini例
+[Config MCS]
+network = artery.envmod.World
+
+*.node[*].middleware.services = xmldoc("services.xml")
+*.node[*].middleware.*.convergenceTime = 5s
+*.node[*].middleware.*.numLanes = 3
+*.node[*].middleware.*.laneWidth = 3.2m
+*.node[*].middleware.*.enableVisualization = true
 ```
 
-### 主要定数（Path.h）
+### 2. サービス登録
 
-```cpp
-static constexpr double K_JERK = 0.1;      // ジャーク重み
-static constexpr double K_SPEED = 5.0;     // 速度重み
-static constexpr double K_LON = 1.0;       // 縦方向重み
-static constexpr double K_LAT = 1.0;       // 横方向重み
+```xml
+<!-- services.xml -->
+<services>
+    <service type="artery.application.mcs.ManeuverCoordinationService">
+        <listener port="2003" />
+    </service>
+</services>
 ```
 
-## 使用方法
-
-### 1. ビルド
+### 3. 実行
 
 ```bash
-# mcsディレクトリでの単体テスト
-cd src/artery/application/mcs/
-
-# 各コンポーネントのテスト
-g++ -DPATH_TEST Path.cc Trajectory.cc FifthDegreePolynomial.cc FourthDegreePolynomial.cc
-g++ -DTRAJECTORY_TEST Trajectory.cc FourthDegreePolynomial.cc FifthDegreePolynomial.cc
-g++ -DPATHGENERATOR_TEST PathGenerator.cc Path.cc Trajectory.cc FifthDegreePolynomial.cc FourthDegreePolynomial.cc
+# SUMOシミュレーション実行
+cmake --build build --target run_simlte-manhattan
 ```
 
-### 2. シミュレーション実行
+### 4. 可視化の確認
+
+1. シミュレーション開始後、プロジェクトディレクトリに`mcm_visualization/`フォルダが作成されます
+2. HTTPサーバーを起動してください：
 
 ```bash
-# OMNeT++でのシミュレーション実行
-omnetpp simulation_config.ini
+# Python 3の場合
+python3 -m http.server 8080
 ```
 
-### 3. 可視化
+3. ブラウザで `http://localhost:8080/mcm_visualization/` にアクセス
 
-シミュレーション実行中に：
+## アルゴリズムの詳細
 
-1. プロジェクトディレクトリでHTTPサーバを起動
-2. ブラウザで `http://localhost:8080/mcm_visualization/` にアクセス
+### 経路生成アルゴリズム
 
-## アルゴリズム詳細
-
-### 経路生成
-
-1. **自由走行経路**: 各レーンで最高速度に達する経路群を生成
-2. **追従走行経路**: 前方車両の位置・速度に基づく追従経路群を生成
-3. **直進経路**: 指定速度に達する直進経路を生成
+1. **自由走行経路**: 各レーンで最高速度への到達を目指す
+2. **追従走行経路**: 前方車両に適切な車間距離で追従
+3. **多項式軌跡**: 4次・5次多項式による滑らかな軌跡
 
 ### 衝突判定
 
 - 時系列での位置比較
-- 縦方向閾値: 車両長の半分 + 安全距離
-- 横方向閾値: レーン幅の半分
+- 車両長と安全時間を考慮したマージン
+- レーン幅を基準とした横方向判定
 
-### 優先度判定
+### 優先度ルール
 
-1. 障害物が最優先
-2. 車線変更車両 < 直進車両
-3. 同一レーン内では前方車両が優先
-
-### コスト計算
-
-```
-総コスト = K_LON × 縦方向コスト + K_LAT × 横方向コスト
-
-縦方向コスト = K_JERK × ジャーク二乗和 + K_SPEED × 速度差二乗
-横方向コスト = K_JERK × ジャーク二乗和
-```
+1. **障害物**: 最高優先度
+2. **車線変更車両**: レーン変更先に既に存在する車両が優先
+3. **同一レーン**: 前方車両が優先
