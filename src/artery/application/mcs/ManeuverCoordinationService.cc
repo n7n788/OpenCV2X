@@ -40,9 +40,12 @@ void ManeuverCoordinationService::initialize(int stage)
         
         // パラメータ読み込み
         mLaneWidth = par("laneWidth").doubleValue();
-        mVehicleLength = par("vehicleLength").doubleValue();
-        mConvTime = par("convergenceTime").doubleValue();
         mNumLanes = par("numLanes").intValue();
+        mVehicleLength = par("vehicleLength").doubleValue();
+        mSafetySecond = par("safetySecond").doubleValue();
+        mConvTime = par("convergenceTime").doubleValue();
+        mLaneChangeInterval = par("laneChangeInterval").doubleValue();
+        mDesiredCostThreshold = par("desiredCostThreshold").doubleValue();
         
         // レーン位置設定（互換性保持）
         for (int i = 0; i < mNumLanes; i++) {
@@ -50,9 +53,10 @@ void ManeuverCoordinationService::initialize(int stage)
         }
         
         // 専門クラスの初期化（依存関係の順序に注意）
+        mPathGenerator.reset(new PathGenerator());
         mCollisionDetector.reset(new CollisionDetector(mVehicleLength, mLaneWidth, mSafetySecond));
         mNegotiationManager.reset(new NegotiationManager(*mCollisionDetector));
-        mPathPlanner.reset(new PathPlanner(mPlanner, *mCollisionDetector, mLaneWidth, mNumLanes, mVehicleLength, mSafetySecond, mConvTime));
+        mPathPlanner.reset(new PathPlanner(*mPathGenerator, *mCollisionDetector, mLaneWidth, mNumLanes, mVehicleLength, mSafetySecond, mConvTime));
         
         // 基本システムの初期化
         mTrigger = new omnetpp::cMessage("MCS trigger");
@@ -142,7 +146,7 @@ ManeuverCoordinationMessage* ManeuverCoordinationService::generate()
         double lonAccel = mVehicleDataProvider->acceleration().value();
         double latPos = mVehicleDataProvider->position().y.value();
         
-        plannedPath = mPlanner.generateSpeedPath(
+        plannedPath = mPathGenerator->generateSpeedPath(
             lonPos, lonSpeed, lonAccel, latPos, 0.0, 0.0, lonSpeed, mConvTime);
     }
 

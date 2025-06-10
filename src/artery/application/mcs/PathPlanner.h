@@ -101,7 +101,7 @@ public:
 
 private:
     PathGenerator& mGenerator;        ///< 経路生成エンジン
-    const CollisionDetector& mDetector; ///< 衝突判定器への参照
+    const CollisionDetector& mCollisionDetector; ///< 衝突判定器への参照
     double mLaneWidth;               ///< レーン幅 [m]
     int mNumLanes;                   ///< レーン数
     std::vector<double> mCenterLanes; ///< レーン中央位置

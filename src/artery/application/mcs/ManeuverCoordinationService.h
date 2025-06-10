@@ -76,7 +76,7 @@ private:
 
     // ========== 専門クラス ==========
     
-    PathGenerator mPlanner;                                      ///< 基本経路生成エンジン
+    std::unique_ptr<PathGenerator> mPathGenerator;               ///< 基本経路生成エンジン
     std::unique_ptr<PathPlanner> mPathPlanner;                   ///< 高レベル経路計画器
     std::unique_ptr<CollisionDetector> mCollisionDetector;       ///< 衝突判定器
     std::unique_ptr<NegotiationManager> mNegotiationManager;     ///< 交渉管理器
@@ -116,12 +116,11 @@ private:
     int mNumLanes;                                               ///< レーン数
     std::vector<double> mCenterLanes;                            ///< レーン中央位置（互換性保持）
     double mVehicleLength;                                       ///< 車両長 [m]
-    double mSafetySecond = 2.0;                                  ///< 安全時間 [s]
+    double mSafetySecond;                                        ///< 安全時間 [s]
     double mConvTime;                                            ///< 収束時間 [s]
-    double mMcmInterval = 1.0;                                   ///< MCM送信間隔 [s]
-    double mLaneChangeInterval = 5.0;                            ///< 車線変更インターバル [s]
-    bool mEnableVisualization = false;                           ///< 可視化有効フラグ
-    double mDesiredCostThreshold = 100.0;                        ///< 希望経路コスト閾値
+    double mLaneChangeInterval;                                  ///< 車線変更インターバル [s]
+    bool mEnableVisualization;                                   ///< 可視化有効フラグ
+    double mDesiredCostThreshold;                                ///< 希望経路コスト閾値
     const std::string mObstacle = "obstacle";                    ///< 障害物ID接頭辞
 };
 

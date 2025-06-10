@@ -8,7 +8,7 @@ namespace artery {
 PathPlanner::PathPlanner(PathGenerator& generator, const CollisionDetector& detector,
                         double laneWidth, int numLanes, 
                         double vehicleLength, double safetySecond, double convTime)
-    : mGenerator(generator), mDetector(detector), mLaneWidth(laneWidth), mNumLanes(numLanes),
+    : mGenerator(generator), mCollisionDetector(detector), mLaneWidth(laneWidth), mNumLanes(numLanes),
       mVehicleLength(vehicleLength), mSafetySecond(safetySecond), mConvTime(convTime) {
     
     for (int i = 0; i < mNumLanes; i++) {
@@ -92,8 +92,8 @@ Path PathPlanner::selectPlannedPath(
             const std::string& otherId = entry.first;
             const Path& otherPath = entry.second;
             
-            if (mDetector.hasPriority(otherId, path, vehiclePoses, vehicleDataProvider) && 
-                mDetector.checkCollision(path, otherPath)) {
+            if (mCollisionDetector.hasPriority(otherId, path, vehiclePoses, vehicleDataProvider) && 
+                mCollisionDetector.checkCollision(path, otherPath)) {
                 isValid = false;
                 break;
             }
@@ -105,7 +105,7 @@ Path PathPlanner::selectPlannedPath(
         for (const auto& id : acceptedIds) {
             const auto& plannedIt = receivedPlannedPaths.find(id);
             if (plannedIt != receivedPlannedPaths.end() && 
-                mDetector.checkCollision(path, plannedIt->second)) {
+                mCollisionDetector.checkCollision(path, plannedIt->second)) {
                 isValid = false;
                 break;
             }
@@ -117,7 +117,7 @@ Path PathPlanner::selectPlannedPath(
         for (const auto& id : acceptedIds) {
             const auto& desiredIt = receivedDesiredPaths.find(id);
             if (desiredIt != receivedDesiredPaths.end() && 
-                mDetector.checkCollision(path, desiredIt->second)) {
+                mCollisionDetector.checkCollision(path, desiredIt->second)) {
                 isValid = false;
                 break;
             }
@@ -150,7 +150,7 @@ Path PathPlanner::selectDesiredPath(
         // 交渉受け入れリストに含まれた車両の希望経路と衝突している候補経路を除外
         for (const auto& id : acceptedIds) {
             const auto& it = receivedDesiredPaths.find(id);
-            if (it != receivedDesiredPaths.end() && mDetector.checkCollision(path, it->second)) {
+            if (it != receivedDesiredPaths.end() && mCollisionDetector.checkCollision(path, it->second)) {
                 isValid = false;
                 break;
             }
@@ -161,7 +161,7 @@ Path PathPlanner::selectDesiredPath(
             const std::string& otherId = entry.first;
             const Path& otherPath = entry.second;
             
-            if (mDetector.isObstacle(otherId) && mDetector.checkCollision(path, otherPath)) {
+            if (mCollisionDetector.isObstacle(otherId) && mCollisionDetector.checkCollision(path, otherPath)) {
                 isValid = false;
                 break;
             }
