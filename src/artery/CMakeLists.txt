@@ -8,6 +8,10 @@ add_library(core SHARED
     application/DenService.cc
     application/mcs/Path.cc
     application/mcs/PathGenerator.cc
+    application/mcs/PathPlanner.cc
+    application/mcs/CollisionDetector.cc
+    application/mcs/NegotiationManager.cc
+    application/mcs/VehicleControllerWrapper.cc
     application/mcs/ManeuverCoordinationMessage.cc
     application/mcs/ManeuverCoordinationService.cc
     application/mcs/FourthDegreePolynomial.cc

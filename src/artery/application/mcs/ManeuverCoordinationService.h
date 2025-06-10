@@ -3,150 +3,128 @@
 
 #include "artery/application/mcs/ManeuverCoordinationMessage.h"
 #include "artery/application/mcs/PathGenerator.h"
+#include "artery/application/mcs/PathPlanner.h"
+#include "artery/application/mcs/CollisionDetector.h"
+#include "artery/application/mcs/NegotiationManager.h"
+#include "artery/application/mcs/VehicleControllerWrapper.h"
 #include "artery/application/mcs/MCMWebVisualizer.h"
 #include "artery/application/ItsG5Service.h"
 #include <map>
 #include <string>
 #include <vector>
 #include <set>
+#include <memory>
 
 namespace artery
 {
 
 class VehicleDataProvider;
-class LocalEnvironmentModel;
 
+/**
+ * @brief 車両間協調制御サービス
+ * 
+ * V2X通信を用いて車両間で経路情報を共有し、協調的な運転操作を実現する。
+ * 各専門クラスに責任を委譲し、自身は通信と全体制御に専念する。
+ */
 class ManeuverCoordinationService : public ItsG5Service
 {
 public:
     virtual ~ManeuverCoordinationService();
 
 protected:
-    /*
-     * 初期化ステージ数を返す
+    /**
+     * @brief 初期化ステージ数を返す
      * @return 初期化ステージ数
      */
     int numInitStages() const override;
     
-    /*
-     * 初期化
+    /**
+     * @brief サービスの初期化
      * @param stage 初期化ステージ
      */
     void initialize(int stage) override;
     
-    /*
-     * 受信処理
-     * @param indication 受信したデータ
-     * @param packet 受信したパケット
+    /**
+     * @brief MCMメッセージの受信処理
+     * @param indication 受信データ情報
+     * @param packet 受信パケット
      */
     void indicate(const vanetza::btp::DataIndication&, omnetpp::cPacket*) override;
     
-    /*
-     * メッセージハンドラ
-     * @param msg 受信したメッセージ
+    /**
+     * @brief メッセージハンドラ
+     * @param msg 受信メッセージ
      */
     void handleMessage(omnetpp::cMessage*) override;
     
-    /*
-     * 送信処理（0.1秒ごとに呼び出される）
+    /**
+     * @brief 定期送信処理
      */
     void trigger() override;
 
 private:
-    /*
-     * MCMを生成
-     * @return 生成されたMCM
+    /**
+     * @brief MCMメッセージの生成
+     * @return 生成されたMCMメッセージ
      */
     ManeuverCoordinationMessage* generate();
     
-    /*
-     * 経路が衝突しているかチェック
-     * @param path1 経路1
-     * @param path2 経路2
-     * @return 衝突している場合true
+    /**
+     * @brief 終了処理
      */
-    bool checkCollision(const Path& path1, const Path& path2);
-    
-    /*
-     * senderIdの通行権が自分より優先かどうかを判定
-     * @param senderId 車両ID
-     * @return senderIdの方が優先度が高い場合true
-     */
-    bool hasPriority(const std::string& senderId, const Path& path);
-    
-    /*
-     * 受信した経路を受け入れるかどうかの判定
-     * @param senderId 送信元の車両ID
-     * @param desiredPath 希望経路
-     * @return 受け入れる場合true
-     */
-    bool acceptPath(const std::string& senderId, const Path& desiredPath);
-    
-    // 前方車両の位置を取得
-    double getLeadingVehiclePosition(double lanePosition);
-    
-    // 前方車両の速度を取得
-    double getLeadingVehicleSpeed(double lanePosition);
-  
-    /*
-     * レーン変更コマンドを発行
-     * @param controller 車両コントローラー
-     * @param targetLane 目標レーン番号
-     */
-    void changeLane(traci::VehicleController* controller, int targetLane);
-
-    /*
-     * 車両が障害物かどうかを判定
-     * @return 障害物の場合true
-     * @note 車両IDが"obstacle"で始まる場合、障害物とみなす
-    */
-    bool isObstacle(const std::string&) const;
- 
     void finish() override;
 
-    std::string mTraciId; //> 車両ID
-    omnetpp::cMessage* mTrigger = nullptr; //> 送信トリガー
+    // ========== 専門クラス ==========
     
-    PathGenerator mPlanner; //> 経路計画
-    const VehicleDataProvider* mVehicleDataProvider = nullptr;
-    traci::VehicleController* mVehicleController = nullptr;
-    
-    std::map<std::string, Path> mReceivedPlannedPaths; //> 受信した予定経路
-    std::map<std::string, Path> mReceivedDesiredPaths; //> 受信した希望経路
-    
-    std::set<std::string> mAcceptedIds; //> 交渉受け入れリスト
-    std::map<std::string, std::pair<double, double>> mVehiclePoses; //> 他車両の位置情報
-    std::map<std::string, std::pair<double, double>> mVehicleSpeeds; //> 他車両の速度情報
-    
-    Path mPreviousPlannedPath; //> 1ステップ前の予定経路
-    Path mPreviousDesiredPath; //> 1ステップ前の希望経路
-    
-    std::vector<Path> mPlannedPaths; //> 予定経路リスト
-    std::vector<Path> mDesiredPaths; //> 希望経路リスト
+    PathGenerator mPlanner;                                      ///< 基本経路生成エンジン
+    std::unique_ptr<PathPlanner> mPathPlanner;                   ///< 高レベル経路計画器
+    std::unique_ptr<CollisionDetector> mCollisionDetector;       ///< 衝突判定器
+    std::unique_ptr<NegotiationManager> mNegotiationManager;     ///< 交渉管理器
+    std::unique_ptr<VehicleControllerWrapper> mVehicleWrapper;   ///< 車両制御ラッパー
 
-    double mLastGenerateMcmTime; //> 最後にMCMを送信した時間
-    double mLastLaneChangeTime; //> 最後にレーン変更した時間
+    // ========== 基本システム ==========
     
-    bool mLaneChangeInProgress = false; //> 車線変更中フラグ
-    int mTargetLane = -1; //> 目標レーン
-    double mLaneChangeStartTime = 0.0; //> 車線変更開始時間
-    double mLastUpdateTime = 0.0; //> 最後に更新した時間
+    std::string mTraciId;                                        ///< 自車両ID
+    omnetpp::cMessage* mTrigger = nullptr;                       ///< 送信トリガー
+    const VehicleDataProvider* mVehicleDataProvider = nullptr;   ///< 車両状態プロバイダ
+    traci::VehicleController* mVehicleController = nullptr;      ///< 車両コントローラー
+    
+    // ========== 通信データ ==========
+    
+    std::map<std::string, Path> mReceivedPlannedPaths;           ///< 受信予定経路
+    std::map<std::string, Path> mReceivedDesiredPaths;           ///< 受信希望経路
+    std::set<std::string> mAcceptedIds;                          ///< 交渉受け入れリスト
+    std::map<std::string, std::pair<double, double>> mVehiclePoses;  ///< 他車両位置情報
+    std::map<std::string, std::pair<double, double>> mVehicleSpeeds; ///< 他車両速度情報
+    
+    // ========== 経路履歴 ==========
+    
+    Path mPreviousPlannedPath;                                   ///< 前回予定経路
+    Path mPreviousDesiredPath;                                   ///< 前回希望経路
+    std::vector<Path> mPlannedPaths;                             ///< 予定経路履歴
+    std::vector<Path> mDesiredPaths;                             ///< 希望経路履歴
 
-    // 設定パラメータ
-    double mLaneWidth; //> レーン幅
-    int mNumLanes; //> レーン数
-    std::vector<double> mCenterLanes; //> 利用可能なレーン位置
-    double mVehicleLength; //> 車両の長さ
-    double mSafetySecond = 2.0; //> 安全距離
-    double mConvTime; //> 収束時間
-    double mMcmInterval = 1.0; //> MCM送信間隔
-    double mLaneChangeInterval = 5.0; //> 車線変更後のインターバル
-    bool mEnableVisualization = false;
-  
-    double mDesiredCostThreshold = 100.0; //> 希望経路のコストが予定経路のコストをこの閾値以下で下回る場合に、希望経路を生成
-    const std::string mObstacle = "obstacle"; //> 障害物のID
+    // ========== タイミング制御 ==========
+    
+    double mLastGenerateMcmTime;                                 ///< 最後のMCM送信時刻
+    double mLastLaneChangeTime;                                  ///< 最後の車線変更時刻
+    double mLastUpdateTime = 0.0;                                ///< 最後の更新時刻
+
+    // ========== 設定パラメータ ==========
+    
+    double mLaneWidth;                                           ///< レーン幅 [m]
+    int mNumLanes;                                               ///< レーン数
+    std::vector<double> mCenterLanes;                            ///< レーン中央位置（互換性保持）
+    double mVehicleLength;                                       ///< 車両長 [m]
+    double mSafetySecond = 2.0;                                  ///< 安全時間 [s]
+    double mConvTime;                                            ///< 収束時間 [s]
+    double mMcmInterval = 1.0;                                   ///< MCM送信間隔 [s]
+    double mLaneChangeInterval = 5.0;                            ///< 車線変更インターバル [s]
+    bool mEnableVisualization = false;                           ///< 可視化有効フラグ
+    double mDesiredCostThreshold = 100.0;                        ///< 希望経路コスト閾値
+    const std::string mObstacle = "obstacle";                    ///< 障害物ID接頭辞
 };
 
 } // namespace artery
 
-#endif /* ARTERY_MANEUVERCOORDINATIONSERVICE_H_ */
+#endif
