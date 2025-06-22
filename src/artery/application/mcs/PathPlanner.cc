@@ -35,9 +35,11 @@ std::vector<Path> PathPlanner::generateCandidatePaths(
     
     std::vector<Path> pathCandidates;
     
+    // 車線変更可能なレーンの中心位置を取得
     std::vector<double> laneCenterPositions = getAvailableLanes(
         vehicleDataProvider, lastLaneChangeTime, laneChangeInterval);
-    
+
+    // 自由走行の経路候補を生成
     auto speedPathCandidates = mGenerator.generateMaxSpeedPathCandidates(
         lonPos, lonSpeed, lonAccel,
         latPos, latSpeed, latAccel,
@@ -62,12 +64,19 @@ std::vector<Path> PathPlanner::generateCandidatePaths(
         }
     }
 
+    // 前方車両に追従走行する経路候補を生成
     auto posPathCandidates = mGenerator.generateMaxPosPathCandidates(
         lonPos, lonSpeed, lonAccel,
         latPos, latSpeed, latAccel,
         leadingLonPoses, leadingLonSpeeds, maxSpeed, leadingLatPoses, mConvTime
     );
     pathCandidates.insert(pathCandidates.end(), posPathCandidates.begin(), posPathCandidates.end());
+
+    // 急停止する経路候補を生成
+    Path stopPath = mGenerator.generateSpeedPath(
+        lonPos, lonSpeed, lonAccel,
+        latPos, latSpeed, latAccel, 0.0, maxSpeed, 3.0);
+    pathCandidates.insert(pathCandidates.end(), stopPath);
 
     return pathCandidates;
 }

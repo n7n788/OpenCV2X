@@ -57,11 +57,13 @@ public:
         * @param latPos [double]   現在の横方向の位置 [m] 
         * @param latSpeed [double] 現在の横方向の速度 [m/s] 
         * @param latAccel [double] 現在の横方向の加速度 [m/s^2] 
-        * @param targetSpeed [double] 目標の速度 [m/s]
+        * @param targetLonSpeed [double] 目標の縦方向の速度 [m/s]
+        * @param maxTargetLonSpeed [double] 縦方向の最高速度 [m/s]
         * @param convergenceTime [double] 収束時間 [s] 
     */
     Path generateSpeedPath(double lonPos, double lonSpeed, double lonAccel, 
-        double latPos, double latSpeed, double latAccel, double targetSpeed, double convergenceTime);
+        double latPos, double latSpeed, double latAccel, double targetSpeed, double maxTargetSpeed,
+        double convergenceTime);
 
 };
 }

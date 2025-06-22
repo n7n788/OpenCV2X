@@ -5,7 +5,7 @@
 namespace artery
 {
 
-void Path::calculateCost(double convergenceTime, double targetLonPos, double targetLonSpeed) {
+void Path::calculateCost(double targetLonPos, double targetLonSpeed) {
     double lonJerkSquareSum = 0.0;
     double latJerkSquareSum = 0.0;
     double lonDiffPos = targetLonPos - mLonTrajectory.getPoses().back();

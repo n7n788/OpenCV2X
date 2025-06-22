@@ -31,7 +31,7 @@ std::vector<Path> PathGenerator::generateMaxSpeedPathCandidates(double lonPos, d
             Path fp(lonTrajectory, latTrajectory); 
 
             // 縦方向の目標速度と実際の終端速度の差分自乗をコストに加算
-            fp.calculateCost(convergenceTime, lonTrajectory.getPoses().back(), maxTargetLonSpeed);
+            fp.calculateCost(lonTrajectory.getPoses().back(), maxTargetLonSpeed);
             pathCandidates.emplace_back(fp);
         }
     }
@@ -61,7 +61,7 @@ std::vector<Path> PathGenerator::generateMaxPosPathCandidates(double lonPos, dou
     
         // 縦方向の目標位置と実際の終端位置の差分自乗をコストに加算
         Path fp(lonTrajectory, latTrajectory);
-        fp.calculateCost(convergenceTime, targetLonPos, maxTargetLonSpeed);
+        fp.calculateCost(targetLonPos, maxTargetLonSpeed);
         pathCandidates.emplace_back(fp);
     }
 
@@ -69,7 +69,8 @@ std::vector<Path> PathGenerator::generateMaxPosPathCandidates(double lonPos, dou
 }
 
 Path PathGenerator::generateSpeedPath(double lonPos, double lonSpeed, double lonAccel,
-    double latPos, double latSpeed, double latAccel, double targetSpeed, double convergenceTime) {
+    double latPos, double latSpeed, double latAccel, 
+    double targetSpeed, double maxTargetLonSpeed, double convergenceTime) {
     
     // 横方向の経路 (直進のみを) 5次元方程式から生成
     Trajectory latTrajectory(FifthDegreePolynomial(latPos, latSpeed, latAccel, latPos, 0.0, 0.0, convergenceTime), convergenceTime);
@@ -77,6 +78,7 @@ Path PathGenerator::generateSpeedPath(double lonPos, double lonSpeed, double lon
     Trajectory lonTrajectory(FourthDegreePolynomial(lonPos, lonSpeed, lonAccel, targetSpeed, 0.0, convergenceTime), convergenceTime);
     
     Path fp(lonTrajectory, latTrajectory);
+    fp.calculateCost(lonTrajectory.getPoses().back(), maxTargetLonSpeed);
     
     return fp;
 }

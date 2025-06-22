@@ -74,6 +74,14 @@ private:
      */
     void finish() override;
 
+    /**
+     * @brief 2つの経路が同じかどうかを判定
+     * @param prevPath [Path] 1つ前の経路
+     * @param currentPath [Path] 現在の経路
+     * @return [bool] 同じ経路ならtrue、異なるならfalse
+    */
+   bool samePath(const Path& prevPath, const Path& currentPath) const;
+
     // ========== 専門クラス ==========
     
     std::unique_ptr<PathGenerator> mPathGenerator;               ///< 基本経路生成エンジン
@@ -122,6 +130,20 @@ private:
     bool mEnableVisualization;                                   ///< 可視化有効フラグ
     double mDesiredCostThreshold;                                ///< 希望経路コスト閾値
     const std::string mObstacle = "obstacle";                    ///< 障害物ID接頭辞
+
+    // ========= 評価を取るための変数 ==========
+
+    double mEntryTime;                                       ///< 道路への進入時間
+    double mExitLonPos;                                      ///< 道路からの退出する縦方向の位置
+    double mNegotiationStartTime;                          ///< 交渉開始時間
+    double mNegotiationTimeout;                         ///< 交渉タイムアウト時間
+
+    // ======== シグナル =======
+
+    omnetpp::simsignal_t velocitySignal;                  ///< 速度シグナル
+    omnetpp::simsignal_t travelTimeSignal;                 ///< 移動時間シグナル
+    omnetpp::simsignal_t negotiationTimeSignal;         ///< 交渉時間シグナル
+    omnetpp::simsignal_t negotiationResultSignal;    ///< 交渉結果シグナル
 };
 
 } // namespace artery

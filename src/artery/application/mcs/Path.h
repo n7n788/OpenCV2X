@@ -37,10 +37,9 @@ public:
 	void setLatTrajectory(const artery::Trajectory& latTrajectory) { mLatTrajectory = latTrajectory; }
 
 	// 経路のコストを計算
-	// @param convergenceTime [double] 収束時間 s
 	// @param targetLonPos [double] 目標の縦方向の位置 m
 	// @param targetLonSpeed [double] 目標の縦方向の速度 m/s
-	void calculateCost(double convergenceTime, double targetLonPos, double targetLonSpeed);
+	void calculateCost(double targetLonPos, double targetLonSpeed);
 
 private:
 	Trajectory mLonTrajectory; // 縦方向のパス

@@ -46,6 +46,7 @@ void ManeuverCoordinationService::initialize(int stage)
         mConvTime = par("convergenceTime").doubleValue();
         mLaneChangeInterval = par("laneChangeInterval").doubleValue();
         mDesiredCostThreshold = par("desiredCostThreshold").doubleValue();
+        mExitLonPos = par("exitLonPos").doubleValue();
         
         // レーン位置設定（互換性保持）
         for (int i = 0; i < mNumLanes; i++) {
@@ -82,10 +83,13 @@ void ManeuverCoordinationService::initialize(int stage)
     }
     else if (stage == InitStages::Self) {
         mTraciId = getFacilities().get_const<Identity>().traci;
-        
-        double initialLatPos = mVehicleDataProvider->position().y.value();
-        int initialLane = static_cast<int>(initialLatPos / mLaneWidth);
-        EV_INFO << "Vehicle " << mTraciId << " starting in lane " << initialLane << std::endl;
+        mEntryTime = omnetpp::simTime().dbl();
+
+        // シグナルの登録
+        velocitySignal = registerSignal("velocity");
+        travelTimeSignal = registerSignal("travelTime");
+        negotiationTimeSignal = registerSignal("negotiationTime");
+        negotiationResultSignal = registerSignal("negotiationResult");
     }
 }
 
@@ -111,6 +115,15 @@ void ManeuverCoordinationService::trigger()
     
     request(req, mcm);
     EV_INFO << "Vehicle " << mTraciId << " sent MCM" << std::endl;
+
+    // 車速のシグナルを送信
+    emit(velocitySignal, mVehicleDataProvider->speed().value());
+
+    // 車両が道路を出る場合、移動時間のシグナルを送信
+    if (mVehicleDataProvider->position().x.value() > mExitLonPos) {
+        double travelTime = omnetpp::simTime().dbl() - mEntryTime;
+        emit(travelTimeSignal, travelTime);
+    }
 }
 
 ManeuverCoordinationMessage* ManeuverCoordinationService::generate()
@@ -128,7 +141,7 @@ ManeuverCoordinationMessage* ManeuverCoordinationService::generate()
 
     // 2. 交渉処理
     mNegotiationManager->processReceivedDesiredPaths(
-        mReceivedDesiredPaths, mPreviousPlannedPath, mAcceptedIds);
+        mReceivedDesiredPaths, mPreviousPlannedPath, pathCandidates, mAcceptedIds);
     
     // 3. 最適経路選択
     Path plannedPath = mPathPlanner->selectPlannedPath(
@@ -139,6 +152,31 @@ ManeuverCoordinationMessage* ManeuverCoordinationService::generate()
         pathCandidates, mReceivedPlannedPaths, mReceivedDesiredPaths,
         mAcceptedIds, plannedPath, mDesiredCostThreshold, mTraciId);
 
+    // 交渉状態の計算
+    // a. 交渉を開始
+    // b. 交渉失敗
+    // c. 交渉実行中
+    // d. 交渉成功
+    // e. 交渉してない
+    if (desiredPath.getCost() >= 0.0) {
+        // a. 交渉を開始する場合
+        if (mNegotiationStartTime < 0.0) {
+            mNegotiationStartTime = omnetpp::simTime().dbl();
+        } else if (mNegotiationStartTime + mNegotiationTimeout <= omnetpp::simTime().dbl()) {
+            // b. 交渉を開始してからタイムアウト秒後経過した場合、交渉失敗と見なす
+            mNegotiationStartTime = -1.0;
+            emit(negotiationResultSignal, 0);
+        } 
+        // c. 交渉の実行中の場合、何もしない
+    } else if(plannedPath.getCost() >= 0 && mPreviousDesiredPath.getCost() >= 0 && 
+              samePath(mPreviousDesiredPath, plannedPath)) {
+        // d. 前回の希望経路と同じ予定経路を送信する場合、交渉成功と見なす
+        double negotiationTime = omnetpp::simTime().dbl() - mNegotiationStartTime;
+        emit(negotiationTimeSignal, negotiationTime);
+        emit(negotiationResultSignal, 1);
+        mNegotiationStartTime = -1.0;
+    } // e. 交渉してない場合、何もしない 
+
     // 4. フォールバック経路
     if (plannedPath.getCost() < 0) {
         double lonPos = mVehicleDataProvider->position().x.value();
@@ -147,7 +185,7 @@ ManeuverCoordinationMessage* ManeuverCoordinationService::generate()
         double latPos = mVehicleDataProvider->position().y.value();
         
         plannedPath = mPathGenerator->generateSpeedPath(
-            lonPos, lonSpeed, lonAccel, latPos, 0.0, 0.0, lonSpeed, mConvTime);
+            lonPos, lonSpeed, lonAccel, latPos, 0.0, 0.0, lonSpeed, 0.0, mConvTime);
     }
 
     // 5. MCM作成
@@ -218,4 +256,19 @@ void ManeuverCoordinationService::finish()
     }
 }
 
-} // namespace artery
+bool ManeuverCoordinationService::samePath(const Path& prevPath, const Path& currentPath) const
+{
+    const int lonSize = currentPath.getLonTrajectory().getPoses().size();
+    const int latSize = currentPath.getLatTrajectory().getPoses().size();
+    const double lonThreshold = 1.0; // 縦方向の比較位置の閾値 [m]
+    const double latThreshold = 1.0; // 横方向の比較位置の閾値 [m]
+
+    if (std::abs(prevPath.getLonTrajectory().getPoses().back() - currentPath.getLonTrajectory().getPoses().at(lonSize - 2)) < lonThreshold &&
+        std::abs(prevPath.getLatTrajectory().getPoses().back() - currentPath.getLatTrajectory().getPoses().at(latSize - 2)) < latThreshold) {
+        return false;
+    }
+    
+    return false;
+} 
+
+}// namespace artery
