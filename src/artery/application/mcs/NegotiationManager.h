@@ -29,12 +29,14 @@ public:
      * @param receivedDesiredPaths 受信希望経路
      * @param myPreviousPlannedPath 自車両の前回予定経路
      * @param candidates 候補経路リスト
+     * @param traciId 自車両のID
      * @param acceptedIds 交渉受け入れリスト（更新される）
      */
     void processReceivedDesiredPaths(
         const std::map<std::string, Path>& receivedDesiredPaths,
         const Path& myPreviousPlannedPath,
         const std::vector<Path>& candidates,
+        const std::string& traciId,
         std::set<std::string>& acceptedIds
     );
     

@@ -135,7 +135,7 @@ private:
 
     double mEntryTime;                                       ///< 道路への進入時間
     double mExitLonPos;                                      ///< 道路からの退出する縦方向の位置
-    double mNegotiationStartTime;                          ///< 交渉開始時間
+    double mNegotiationStartTime = -1.0;                          ///< 交渉開始時間
     double mNegotiationTimeout;                         ///< 交渉タイムアウト時間
 
     // ======== シグナル =======

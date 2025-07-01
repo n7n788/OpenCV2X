@@ -36,9 +36,9 @@ void VehicleControllerWrapper::handleLaneChange(const Path& plannedPath, const s
         auto& api = mController->getLiteAPI();
         api.vehicle().changeLane(traciId, targetLane, mConvTime);
         
-        std::cout << "Vehicle " << traciId << " changing lane from " 
-                  << currentLane << " to " << targetLane 
-                  << " over " << mConvTime << " seconds\n";
+        // std::cout << "Vehicle " << traciId << " changing lane from " 
+        //           << currentLane << " to " << targetLane 
+        //           << " over " << mConvTime << " seconds\n";
         
         mLaneChangeInProgress = true;
         mTargetLane = targetLane;
@@ -51,8 +51,8 @@ void VehicleControllerWrapper::handleLaneChange(const Path& plannedPath, const s
         if (elapsedTime >= mConvTime || currentLane == mTargetLane) {
             mLaneChangeInProgress = false;
             mLastLaneChangeTime = omnetpp::simTime().dbl();
-            std::cout << "Vehicle " << traciId << " completed lane change to " 
-                      << mTargetLane << " time: " << mLastLaneChangeTime << "\n";
+            // std::cout << "Vehicle " << traciId << " completed lane change to " 
+            //           << mTargetLane << " time: " << mLastLaneChangeTime << "\n";
         }
     }
 }

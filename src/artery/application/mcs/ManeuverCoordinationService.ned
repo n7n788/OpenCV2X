@@ -15,9 +15,12 @@ simple ManeuverCoordinationService like ItsG5Service
 
         // MCSの設定
         double convergenceTime @unit(s) = default(5s); // 経路の時間幅
-        double desiredCostThreshold = default(100.0); // 希望経路を選択するための予定経路とのコスト閾値
         double safetySecond @unit(s) = default(2.0s); // 安全秒数
         double laneChangeInterval @unit(s) = default(5.0s); // 連続したレーン変更を避けるための間隔
+        double negotiationTimeout @unit(s) = default(1.0s); // 交渉のタイムアウト時間
+
+        // コスト計算
+        double desiredCostThreshold = default(200.0); // 希望経路を選択するための予定経路とのコスト閾値
 
         // 可視化設定
         bool enableVisualization = default(true);

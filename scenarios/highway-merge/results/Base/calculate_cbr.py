@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 import sys
 import re
 
-SIMULATION_TIME = 30  # シミュレーション時間（秒）
+SIMULATION_TIME = 50  # シミュレーション時間（秒）
 TIME_STEP = 0.1  # CBRの平均を取る時間ステップ（秒）
 
 #文字列を数字、True, False, Noneのいずれかに変換する関数

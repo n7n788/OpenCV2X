@@ -47,6 +47,7 @@ void ManeuverCoordinationService::initialize(int stage)
         mLaneChangeInterval = par("laneChangeInterval").doubleValue();
         mDesiredCostThreshold = par("desiredCostThreshold").doubleValue();
         mExitLonPos = par("exitLonPos").doubleValue();
+        mNegotiationTimeout = par("negotiationTimeout").doubleValue();
         
         // レーン位置設定（互換性保持）
         for (int i = 0; i < mNumLanes; i++) {
@@ -141,7 +142,7 @@ ManeuverCoordinationMessage* ManeuverCoordinationService::generate()
 
     // 2. 交渉処理
     mNegotiationManager->processReceivedDesiredPaths(
-        mReceivedDesiredPaths, mPreviousPlannedPath, pathCandidates, mAcceptedIds);
+        mReceivedDesiredPaths, mPreviousPlannedPath, pathCandidates, mTraciId, mAcceptedIds);
     
     // 3. 最適経路選択
     Path plannedPath = mPathPlanner->selectPlannedPath(
@@ -162,12 +163,18 @@ ManeuverCoordinationMessage* ManeuverCoordinationService::generate()
         // a. 交渉を開始する場合
         if (mNegotiationStartTime < 0.0) {
             mNegotiationStartTime = omnetpp::simTime().dbl();
+            std::cout << mTraciId << " negotiation started at " << mNegotiationStartTime << std::endl;
         } else if (mNegotiationStartTime + mNegotiationTimeout <= omnetpp::simTime().dbl()) {
             // b. 交渉を開始してからタイムアウト秒後経過した場合、交渉失敗と見なす
             mNegotiationStartTime = -1.0;
             emit(negotiationResultSignal, 0);
-        } 
-        // c. 交渉の実行中の場合、何もしない
+            std::cout << mTraciId << " negotiation failed at " << omnetpp::simTime().dbl() << std::endl;
+        } else {
+            // c. 交渉の実行中の場合、何もしない
+            std::cout << mTraciId << " negotiation in progress at " << omnetpp::simTime().dbl() << std::endl;
+        }
+        std::cout << "desiredPath target: " << desiredPath.getLonTrajectory().getPoses().back() << 
+        ", " << desiredPath.getLatTrajectory().getPoses().back() << std::endl;
     } else if(plannedPath.getCost() >= 0 && mPreviousDesiredPath.getCost() >= 0 && 
               samePath(mPreviousDesiredPath, plannedPath)) {
         // d. 前回の希望経路と同じ予定経路を送信する場合、交渉成功と見なす
@@ -175,6 +182,7 @@ ManeuverCoordinationMessage* ManeuverCoordinationService::generate()
         emit(negotiationTimeSignal, negotiationTime);
         emit(negotiationResultSignal, 1);
         mNegotiationStartTime = -1.0;
+        std::cout << mTraciId << " negotiation succeeded at " << omnetpp::simTime().dbl() << std::endl;
     } // e. 交渉してない場合、何もしない 
 
     // 4. フォールバック経路
@@ -258,14 +266,20 @@ void ManeuverCoordinationService::finish()
 
 bool ManeuverCoordinationService::samePath(const Path& prevPath, const Path& currentPath) const
 {
+    std::cout << "Comparing paths for vehicle " << mTraciId << std::endl;
+
     const int lonSize = currentPath.getLonTrajectory().getPoses().size();
     const int latSize = currentPath.getLatTrajectory().getPoses().size();
-    const double lonThreshold = 1.0; // 縦方向の比較位置の閾値 [m]
-    const double latThreshold = 1.0; // 横方向の比較位置の閾値 [m]
+    const double lonThreshold = mVehicleLength; // 縦方向の比較位置の閾値 [m]
+    const double latThreshold = mLaneWidth / 2.0; // 横方向の比較位置の閾値 [m]
 
-    if (std::abs(prevPath.getLonTrajectory().getPoses().back() - currentPath.getLonTrajectory().getPoses().at(lonSize - 2)) < lonThreshold &&
-        std::abs(prevPath.getLatTrajectory().getPoses().back() - currentPath.getLatTrajectory().getPoses().at(latSize - 2)) < latThreshold) {
-        return false;
+    std::cout << prevPath.getLonTrajectory().getPoses().back() << " vs "
+              << currentPath.getLonTrajectory().getPoses().at(lonSize - 1) << std::endl;
+    std::cout << prevPath.getLatTrajectory().getPoses().back() << " vs "
+              << currentPath.getLatTrajectory().getPoses().at(latSize - 1) << std::endl;
+    if (std::abs(prevPath.getLonTrajectory().getPoses().back() - currentPath.getLonTrajectory().getPoses().at(lonSize - 1)) < lonThreshold &&
+        std::abs(prevPath.getLatTrajectory().getPoses().back() - currentPath.getLatTrajectory().getPoses().at(latSize - 1)) < latThreshold) {
+        return true;
     }
     
     return false;

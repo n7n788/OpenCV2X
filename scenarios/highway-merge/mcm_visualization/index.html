@@ -577,7 +577,7 @@
             const viewInfo = drawRoad(scaleValue);
             
             // 車両位置も更新
-            fetch('data.json')
+            fetch('data.json?' + new Data.getTime())
                 .then(response => response.json())
                 .then(data => {
                     updateVehicles(data, scaleValue, viewInfo);
@@ -596,7 +596,7 @@
             const scaleValue = parseFloat(scale.value);
             const viewInfo = drawRoad(scaleValue);
             
-            fetch('data.json')
+            fetch('data.json?' + new Date().getTime())
                 .then(response => response.json())
                 .then(data => {
                     updateVehicles(data, scaleValue, viewInfo);

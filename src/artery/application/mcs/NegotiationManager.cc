@@ -12,6 +12,7 @@ void NegotiationManager::processReceivedDesiredPaths(
     const std::map<std::string, Path>& receivedDesiredPaths,
     const Path& myPreviousPlannedPath,
     const std::vector<Path>& candidates,
+    const std::string& traciId,
     std::set<std::string>& acceptedIds) {
     
     for (const auto& entry : receivedDesiredPaths) {
@@ -28,6 +29,7 @@ void NegotiationManager::processReceivedDesiredPaths(
             acceptPath(senderId, desiredPath)) {
             
             acceptedIds.insert(senderId);
+            std::cout << traciId << " accepted path from " << senderId << "\n";
         }
     }
 }

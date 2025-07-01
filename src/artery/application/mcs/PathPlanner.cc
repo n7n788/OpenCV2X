@@ -73,10 +73,10 @@ std::vector<Path> PathPlanner::generateCandidatePaths(
     pathCandidates.insert(pathCandidates.end(), posPathCandidates.begin(), posPathCandidates.end());
 
     // 急停止する経路候補を生成
-    Path stopPath = mGenerator.generateSpeedPath(
-        lonPos, lonSpeed, lonAccel,
-        latPos, latSpeed, latAccel, 0.0, maxSpeed, 3.0);
-    pathCandidates.insert(pathCandidates.end(), stopPath);
+    // Path stopPath = mGenerator.generateSpeedPath(
+    //     lonPos, lonSpeed, lonAccel,
+    //     latPos, latSpeed, latAccel, 0.0, maxSpeed, 2.0);
+    // pathCandidates.insert(pathCandidates.end(), stopPath);
 
     return pathCandidates;
 }
@@ -164,6 +164,17 @@ Path PathPlanner::selectDesiredPath(
                 break;
             }
         }
+        
+        // 交渉受け入れリストに含まれた車両の予定経路と衝突している候補経路を除外
+        for (const auto& id : acceptedIds) {
+            const auto& plannedIt = receivedPlannedPaths.find(id);
+            if (plannedIt != receivedPlannedPaths.end() && 
+                mCollisionDetector.checkCollision(path, plannedIt->second)) {
+                isValid = false;
+                break;
+            }
+        }
+        
 
         // 障害物と衝突している候補経路を除外
         for (const auto& entry : receivedPlannedPaths) {
